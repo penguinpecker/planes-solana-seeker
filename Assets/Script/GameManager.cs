@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance = null;
     #region Public_Variable
     public GameObject Missiles;
+
     public GameObject HomeScreen;
     public GameObject PlayerObj;
     public GameObject GameOver;
@@ -56,6 +57,17 @@ public class GameManager : MonoBehaviour
     [Header("Coins Value")]
     [SerializeField]
     private List<int> _values;
+
+    [Header("Sound Control")]
+    [SerializeField]
+    private Image _soundButtonImage;
+    [SerializeField]
+    private Sprite _soundOnSprite;
+    [SerializeField]
+    private Sprite _soundOffSprite;
+    [SerializeField]
+    private Text _soundStatusText;
+    private bool _isSoundOn = true;
     #endregion
 
     #region Unity_CallBack
@@ -74,6 +86,10 @@ public class GameManager : MonoBehaviour
         Coins.text = (PlayerPrefs.GetInt("TotalCoins")).ToString();
         _planeID = PlayerPrefs.GetInt("PlaneID");
         ExtraObj1.SetActive(false);
+        if (WatchAd != null)
+        {
+            WatchAd.SetActive(false);
+        }
         Missiles.SetActive(false);
         HomeScreen.SetActive(true);
         GamePanel.SetActive(false);
@@ -82,6 +98,9 @@ public class GameManager : MonoBehaviour
 
         //Set Plane Coins
         SetPlaneCoins();
+
+        // Initialize sound state from saved preference
+        InitializeSoundState();
     }
     // Use this for initialization
     void Start()
@@ -108,6 +127,10 @@ public class GameManager : MonoBehaviour
         Debug.Log("Home Button Press");
         PlayerObj.transform.position = _playerStartPos;
         PlayerObj.transform.rotation = Quaternion.EulerAngles(Vector3.zero);
+        if (WatchAd != null)
+        {
+            WatchAd.SetActive(false);
+        }
         PausePanel.SetActive(false);
         HomeScreen.SetActive(true);
         GameOver.SetActive(false);
@@ -142,6 +165,12 @@ public class GameManager : MonoBehaviour
     //when player die
     public void OnplayerDie()
     {
+        // Notify the parent Farcaster Mini App (Next.js) that the player died
+        // so it can trigger an NFT mint on Sepolia via Thirdweb.
+#if UNITY_WEBGL && !UNITY_EDITOR
+        Application.ExternalEval("window.parent.postMessage({ type: 'REQUEST_MINT_ON_DEATH' }, '*');");
+#endif
+
         Time.timeScale = 0;
         NumOfAd--;
         Debug.Log("watch add" + NumOfAd);
@@ -153,16 +182,48 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            if (Application.internetReachability == NetworkReachability.NotReachable)
+            // Previously this branch showed a \"Watch Ad\" panel.
+            // For the Farcaster/NFT version we remove the ad option
+            // and go directly to the game over state instead.
+            GameOver.SetActive(true);
+            GamePanel.SetActive(false);
+            NumOfAd = 3;
+        }
+    }
+
+    // Called from JavaScript in the WebGL template when the mint finishes.
+    // See: public/planes-webgl/index.html where window.unityInstance.SendMessage
+    // invokes GameManager.OnMintResult(string).
+    public void OnMintResult(string json)
+    {
+        Debug.Log("Mint result from parent: " + json);
+
+        // Very simple flow for now:
+        // - If status === "success", restart the game
+        // - Otherwise, just unpause and show GameOver as usual.
+        try
+        {
+            if (json.Contains("\"status\":\"success\""))
             {
-                DoNotWatchAd();
-                //Debug.Log("Error. Check internet connection!");
+                // Reset time scale and use existing home/start logic.
+                Time.timeScale = 1;
+                HomeButton();
+                StartGame();
             }
             else
             {
-                WatchAd.SetActive(true);
+                // Resume and show regular Game Over UI if needed.
+                Time.timeScale = 1;
+                GameOver.SetActive(true);
+                GamePanel.SetActive(false);
             }
-            // RewardPanel.SetActive(true);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Failed to handle mint result: " + e.Message);
+            Time.timeScale = 1;
+            GameOver.SetActive(true);
+            GamePanel.SetActive(false);
         }
     }
 
@@ -359,6 +420,49 @@ public class GameManager : MonoBehaviour
     public void InAppPanelClose()
     {
         InappPanel.SetActive(false);
+    }
+
+    // Initialize sound state from PlayerPrefs
+    private void InitializeSoundState()
+    {
+        // Default to sound ON (1) if no preference saved
+        _isSoundOn = PlayerPrefs.GetInt("SoundOn", 1) == 1;
+        ApplySoundState();
+    }
+
+    // Toggle sound on/off - call this from the sound button
+    public void ToggleSound()
+    {
+        _isSoundOn = !_isSoundOn;
+        PlayerPrefs.SetInt("SoundOn", _isSoundOn ? 1 : 0);
+        PlayerPrefs.Save();
+        ApplySoundState();
+    }
+
+    // Apply the current sound state to audio and UI
+    private void ApplySoundState()
+    {
+        // Use AudioListener.pause to globally mute/unmute all audio
+        AudioListener.pause = !_isSoundOn;
+
+        // Update the sound status text
+        if (_soundStatusText != null)
+        {
+            _soundStatusText.text = _isSoundOn ? "On" : "Off";
+        }
+
+        // Update the button image if assigned
+        if (_soundButtonImage != null)
+        {
+            if (_isSoundOn && _soundOnSprite != null)
+            {
+                _soundButtonImage.sprite = _soundOnSprite;
+            }
+            else if (!_isSoundOn && _soundOffSprite != null)
+            {
+                _soundButtonImage.sprite = _soundOffSprite;
+            }
+        }
     }
     #endregion
 }
