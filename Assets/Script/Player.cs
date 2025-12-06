@@ -26,6 +26,7 @@ public class Player : MonoBehaviour
     private float _rotationX;
     Rigidbody2D _rb;
     private bool _protect;
+    private bool _isDead = false;
     private int LevelIndex = 0;
     [SerializeField]
     private GameObject VariousPlane;
@@ -35,6 +36,7 @@ public class Player : MonoBehaviour
 
     public void OnEnable()
     {
+        _isDead = false;  // Reset death state when player is enabled
         VariousPlane.SetActive(true);
 
         _animationComp.SetActive(false);
@@ -128,7 +130,7 @@ public class Player : MonoBehaviour
     {       
         if(collision.gameObject.tag != "ExtraObj")
         {
-            if (!_protect)
+            if (!_protect && !_isDead)
             {
                 //  gameObject.SetActive(false);
                 StartCoroutine(OnPlayerDestroy());
@@ -136,6 +138,9 @@ public class Player : MonoBehaviour
         }
         if(collision.gameObject.tag == "ExtraObj")
         {
+            // Don't collect coins if player is dead
+            if (_isDead) return;
+            
             Debug.Log("Collision Done");
             collision.gameObject.SetActive(false);
             GameManager.Instance.ExtraIns();
@@ -176,6 +181,7 @@ public class Player : MonoBehaviour
     #region Coroutine
     IEnumerator OnPlayerDestroy()
     {
+        _isDead = true;  // Mark player as dead immediately
         VariousPlane.SetActive(false);
         _animationComp.SetActive(true);
         yield return new WaitForSeconds(2.0f);
