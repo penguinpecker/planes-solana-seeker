@@ -24,19 +24,19 @@ public class MissileObj : MonoBehaviour
 
     void OnEnable()
     {
-        Debug.Log("Missile generate");
-        if (PlayerPrefs.GetInt("LevelIndex") == 0)
+        if (Player.Instance == null) return;
+
+        int levelIndex = PlayerPrefs.GetInt("LevelIndex", 0);
+        if (levelIndex == 0 && Player.Instance.RoateRange.Count > 0 && Player.Instance.SpeedRange.Count > 0)
         {
             rotateSpeed = Random.Range(Player.Instance.RoateRange[0].x, Player.Instance.RoateRange[0].y);
             speed = Random.Range(Player.Instance.SpeedRange[0].x, Player.Instance.SpeedRange[0].y);
         }
-
-        if (PlayerPrefs.GetInt("LevelIndex") == 1)
+        else if (levelIndex == 1 && Player.Instance.RoateRange.Count > 1 && Player.Instance.SpeedRange.Count > 1)
         {
             rotateSpeed = Random.Range(Player.Instance.RoateRange[1].x, Player.Instance.RoateRange[1].y);
             speed = Random.Range(Player.Instance.SpeedRange[1].x, Player.Instance.SpeedRange[1].y);
         }
-
     }
     // Use this for initialization
     void Start()
@@ -68,31 +68,26 @@ public class MissileObj : MonoBehaviour
 
     private void CreatObj()
     {
+        if (Player.Instance == null || _rb == null) return;
+
         if (!stopMove)
         {
             Vector2 _direction = (Vector2)Player.Instance.transform.position - (Vector2)this.transform.position;
-
             _direction.Normalize();
 
             float rotateAmount = Vector3.Cross(_direction, this.transform.up).z;
-
             _rb.angularVelocity = -rotateAmount * rotateSpeed;
-
-            _rb.velocity = this.transform.up * speed;
+            _rb.linearVelocity = this.transform.up * speed;
         }
         if (extraMissile)
         {
             Vector2 _direction = (Vector2)Player.Instance.transform.position - (Vector2)this.transform.position;
-
             _direction.Normalize();
 
             float rotateAmount = Vector3.Cross(_direction, this.transform.up).z;
-
             _rb.angularVelocity = -rotateAmount * rotateSpeed * 0.8f;
-
-            _rb.velocity = this.transform.up * speed * 2;
+            _rb.linearVelocity = this.transform.up * speed * 2;
         }
-
     }
 
     #endregion

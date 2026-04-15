@@ -63,6 +63,12 @@ public class Player : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        // Disable plane sound - will be edited later
+        AudioSource[] audioSources = GetComponentsInChildren<AudioSource>(true);
+        foreach (AudioSource audio in audioSources)
+        {
+            audio.enabled = false;
+        }
     }
 
     // Update is called once per frame
@@ -127,23 +133,24 @@ public class Player : MonoBehaviour
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
-    {       
-        if(collision.gameObject.tag != "ExtraObj")
+    {
+        if (!collision.gameObject.CompareTag("ExtraObj"))
         {
             if (!_protect && !_isDead)
             {
-                //  gameObject.SetActive(false);
                 StartCoroutine(OnPlayerDestroy());
             }
         }
-        if(collision.gameObject.tag == "ExtraObj")
+        else if (collision.gameObject.CompareTag("ExtraObj"))
         {
             // Don't collect coins if player is dead
             if (_isDead) return;
-            
-            Debug.Log("Collision Done");
+
             collision.gameObject.SetActive(false);
-            GameManager.Instance.ExtraIns();
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.ExtraIns();
+            }
         }
     }
     #endregion

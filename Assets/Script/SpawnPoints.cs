@@ -8,18 +8,11 @@ public class SpawnPoints : MonoBehaviour
 
     public void OnEnable()
     {
+        // Clear list to prevent duplicates on multiple OnEnable calls
+        spawnPoint.Clear();
         foreach (Transform child in this.transform)
         {
             spawnPoint.Add(child);
         }
     }
-    // Use this for initialization
-    void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
 }

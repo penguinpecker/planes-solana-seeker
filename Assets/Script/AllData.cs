@@ -7,6 +7,8 @@ namespace Amar
 
         #region Public_Variables
         public const string COINS_VALUE = "Total Coins";
+        public const string SOL_BALANCE = "SOL Balance";
+        public const string SOL_SYMBOL = "◎"; // Solana symbol
 
         #endregion
 

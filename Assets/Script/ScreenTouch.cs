@@ -10,24 +10,24 @@ public class ScreenTouch : MonoBehaviour
     void Start()
     {
         ScreenWidth = Screen.width;
-        Debug.Log(ScreenWidth);
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(Input.touchCount > 0)
+        if (Player.Instance == null) return;
+
+        if (Input.touchCount > 0)
         {
-            if (Input.GetTouch(0).position.x > ScreenWidth / 2 )
+            if (Input.GetTouch(0).position.x > ScreenWidth / 2)
             {
                 Player.Instance.Arrowright();
             }
-            if (Input.GetTouch(0).position.x < ScreenWidth / 2 )
+            else if (Input.GetTouch(0).position.x < ScreenWidth / 2)
             {
                 Player.Instance.Arrowleft();
             }
         }
-
     }
 
 }

@@ -14,13 +14,14 @@ public class ExtraObj : MonoBehaviour
     #region Private_Variable
     [SerializeField]
     GameObject _star;
+    private Coroutine _createObjCoroutine;
     #endregion
 
 
     #region Unity_CallBAck
     public void Awake()
     {
-        if(Instance == null)
+        if (Instance == null)
         {
             Instance = this;
         }
@@ -28,7 +29,11 @@ public class ExtraObj : MonoBehaviour
 
     void OnEnable()
     {
-        StartCoroutine(CreateObj());
+        if (_createObjCoroutine != null)
+        {
+            StopCoroutine(_createObjCoroutine);
+        }
+        _createObjCoroutine = StartCoroutine(CreateObj());
     }
 
 	// Use this for initialization
@@ -45,8 +50,12 @@ public class ExtraObj : MonoBehaviour
 
     public void OnDisable()
     {
-        StopCoroutine(CreateObj());
-        foreach(Transform child in transform)
+        if (_createObjCoroutine != null)
+        {
+            StopCoroutine(_createObjCoroutine);
+            _createObjCoroutine = null;
+        }
+        foreach (Transform child in transform)
         {
             Destroy(child.gameObject);
         }
@@ -58,8 +67,11 @@ public class ExtraObj : MonoBehaviour
     {
         while (true)
         {
-            GameObject _starObj = Instantiate(_star, this.transform );
-            _starObj.transform.position = spawnPoints[Random.Range(0, 6)].position;
+            if (_star != null && spawnPoints != null && spawnPoints.Count > 0)
+            {
+                GameObject _starObj = Instantiate(_star, this.transform);
+                _starObj.transform.position = spawnPoints[Random.Range(0, spawnPoints.Count)].position;
+            }
             yield return new WaitForSeconds(2.0f);
         }
     }

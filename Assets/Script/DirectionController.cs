@@ -19,10 +19,11 @@ public class DirectionController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (_player == null || Camera.main == null) return;
+
 #if UNITY_EDITOR
         Vector2 mousePOS = Input.mousePosition;
         mousePOS = Camera.main.ScreenToWorldPoint(mousePOS);
-        // _player.transform.up = (Input.GetTouch(0).position) - (Vector2)(_player.transform.up);
         if (Input.GetMouseButton(0))
         {
             Vector2 direction = new Vector2(mousePOS.x - _player.transform.position.x, mousePOS.y - _player.transform.position.y);
@@ -34,7 +35,6 @@ public class DirectionController : MonoBehaviour
             return;
 
         Touch touch = Input.GetTouch(0);
-
         Vector3 pointerPos = touch.position;
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(pointerPos);
 

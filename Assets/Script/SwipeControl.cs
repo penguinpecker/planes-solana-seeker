@@ -13,8 +13,6 @@ public class SwipeControl : MonoBehaviour
     private Vector2 _startTouch, _swipeDelta, _endTouch;
 
     private bool _isDragging = false;
-
-    [SerializeField]
     #endregion
 
     #region Events
@@ -124,9 +122,6 @@ public class SwipeControl : MonoBehaviour
         {
             float x = _swipeDelta.x;
             float y = _swipeDelta.y;
-
-            Debug.Log("value of x :" + x);
-            Debug.Log("value of y :" + y);
 
 
             if (Mathf.Abs(x) > Mathf.Abs(y))                                     // FOR MEASURE WETHER X IS BIGGER OR Y. IT WILL ONLY CONSIDE VALUE NOT SIGN

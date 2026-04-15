@@ -38,13 +38,18 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     List<AudioClip> _clip;
 
-    [Header("Total Coins")]
+    [Header("Total Coins (In-Game)")]
     [SerializeField]
     private Text Coins;
 
     [Header("Coins Value")]
     [SerializeField]
     private int CoinsValue;
+
+    [Header("SOL Balance")]
+    [SerializeField]
+    private Text _solBalanceText;
+    private float _solBalance = 0f;
 
     [Header("Buttons")]
     [SerializeField]
@@ -58,6 +63,14 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private List<int> _values;
 
+    [Header("Coin Shop - Buy Coins with SOL")]
+    [SerializeField] private int _coinPackage1Amount = 200;
+    [SerializeField] private float _coinPackage1PriceSOL = 0.01f;
+    [SerializeField] private int _coinPackage2Amount = 500;
+    [SerializeField] private float _coinPackage2PriceSOL = 0.02f;
+    [SerializeField] private int _coinPackage3Amount = 1000;
+    [SerializeField] private float _coinPackage3PriceSOL = 0.05f;
+
     [Header("Sound Control")]
     [SerializeField]
     private Image _soundButtonImage;
@@ -68,17 +81,34 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private Text _soundStatusText;
     private bool _isSoundOn = true;
+
+    [Header("Solana Wallet")]
+    [SerializeField]
+    private GameObject _connectWalletButton;
+    [SerializeField]
+    private Text _walletAddressText;
     #endregion
 
     #region Unity_CallBack
     void Awake()
     {
-        //PlayerPrefs.DeleteAll();
         _playerStartPos = PlayerObj.transform.position;
-        // PlayerPrefs.DeleteAll();
         if (Instance == null)
         {
             Instance = this;
+        }
+
+        // Auto-create SolanaManager if it doesn't exist
+        EnsureSolanaManagerExists();
+    }
+
+    private void EnsureSolanaManagerExists()
+    {
+        if (SolanaManager.Instance == null)
+        {
+            GameObject solanaManagerObj = new GameObject("SolanaManager");
+            solanaManagerObj.AddComponent<SolanaManager>();
+            Debug.Log("[GameManager] Created SolanaManager automatically");
         }
     }
     void OnEnable()
@@ -126,7 +156,7 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("Home Button Press");
         PlayerObj.transform.position = _playerStartPos;
-        PlayerObj.transform.rotation = Quaternion.EulerAngles(Vector3.zero);
+        PlayerObj.transform.rotation = Quaternion.identity;
         if (WatchAd != null)
         {
             WatchAd.SetActive(false);
@@ -344,35 +374,12 @@ public class GameManager : MonoBehaviour
 
     public void SetPlaneCoins()
     {
+        // First plane is always free/unlocked
         if (_planeID == 0)
         {
             PlayerPrefs.SetInt("PlaneID" + _planeID, 1);
-            SetPlayButton(_planeID);
         }
-        if (_planeID == 1)
-        {
-            SetPlayButton(_planeID);
-        }
-        if (_planeID == 2)
-        {
-            SetPlayButton(_planeID);
-        }
-        if (_planeID == 3)
-        {
-            SetPlayButton(_planeID);
-        }
-        if (_planeID == 4)
-        {
-            SetPlayButton(_planeID);
-        }
-        if (_planeID == 5)
-        {
-            SetPlayButton(_planeID);
-        }
-        if (_planeID == 6)
-        {
-            SetPlayButton(_planeID);
-        }
+        SetPlayButton(_planeID);
     }
 
     private void SetPlayButton(int status)
@@ -409,7 +416,95 @@ public class GameManager : MonoBehaviour
             RemoveCoins(_values[_planeID]);
             PlayerPrefs.SetInt("Purchased", _planeID);
         }
+    }
 
+    // Coin Shop - Buy coins with SOL
+    public void BuyCoinPackage1()
+    {
+        BuyCoinPackageWithSol(_coinPackage1Amount, _coinPackage1PriceSOL, "CoinPack1");
+    }
+
+    public void BuyCoinPackage2()
+    {
+        BuyCoinPackageWithSol(_coinPackage2Amount, _coinPackage2PriceSOL, "CoinPack2");
+    }
+
+    public void BuyCoinPackage3()
+    {
+        BuyCoinPackageWithSol(_coinPackage3Amount, _coinPackage3PriceSOL, "CoinPack3");
+    }
+
+    private void BuyCoinPackageWithSol(int coinAmount, float solPrice, string packageName)
+    {
+        // Check if SolanaManager exists
+        if (SolanaManager.Instance == null)
+        {
+            Debug.LogError("SolanaManager not found! Please add SolanaManager to the scene.");
+            return;
+        }
+
+        // Check if wallet is connected
+        if (!SolanaManager.Instance.IsWalletConnected)
+        {
+            Debug.Log("Wallet not connected. Initiating connection...");
+            ConnectSolanaWallet();
+            return;
+        }
+
+        // Check if user has sufficient SOL balance
+        if (!SolanaManager.Instance.HasSufficientBalance(solPrice))
+        {
+            Debug.Log($"Insufficient SOL balance. Need {solPrice} SOL, have {SolanaManager.Instance.WalletBalance} SOL");
+            return;
+        }
+
+        // Initiate SOL payment for coins
+        StartCoroutine(ProcessCoinPurchase(coinAmount, solPrice, packageName));
+    }
+
+    private System.Collections.IEnumerator ProcessCoinPurchase(int coinAmount, float solPrice, string packageName)
+    {
+        Debug.Log($"Processing payment of {solPrice} SOL for {coinAmount} coins ({packageName})");
+
+        bool paymentComplete = false;
+        bool paymentSuccess = false;
+        string transactionResult = "";
+
+        // Use SolanaManager to process real payment
+        SolanaManager.Instance.SendPayment(solPrice, packageName, (success, result) => {
+            paymentComplete = true;
+            paymentSuccess = success;
+            transactionResult = result;
+        });
+
+        // Wait for payment to complete
+        while (!paymentComplete)
+        {
+            yield return null;
+        }
+
+        if (paymentSuccess)
+        {
+            Debug.Log($"Payment successful! Transaction: {transactionResult}");
+            // Add coins to player's balance
+            AddCoins(coinAmount);
+            Debug.Log($"Added {coinAmount} coins to balance!");
+            // Close the in-app panel
+            InAppPanelClose();
+        }
+        else
+        {
+            Debug.LogError($"Payment failed: {transactionResult}");
+        }
+    }
+
+    public void UpdateSolBalanceDisplay(float balance)
+    {
+        _solBalance = balance;
+        if (_solBalanceText != null)
+        {
+            _solBalanceText.text = "◎ " + balance.ToString("F4") + " SOL";
+        }
     }
 
     public void InappPanelStatus()
@@ -462,6 +557,80 @@ public class GameManager : MonoBehaviour
             {
                 _soundButtonImage.sprite = _soundOffSprite;
             }
+        }
+    }
+
+    // Solana Wallet Integration for Seeker dApp Store
+    public void ConnectSolanaWallet()
+    {
+        if (SolanaManager.Instance != null)
+        {
+            SolanaManager.Instance.OnWalletConnected += OnSolanaWalletConnected;
+            SolanaManager.Instance.OnWalletDisconnected += OnSolanaWalletDisconnected;
+            SolanaManager.Instance.OnError += OnSolanaError;
+            SolanaManager.Instance.ConnectWallet();
+        }
+        else
+        {
+            Debug.LogWarning("SolanaManager not found in scene");
+        }
+    }
+
+    public void DisconnectSolanaWallet()
+    {
+        if (SolanaManager.Instance != null)
+        {
+            SolanaManager.Instance.DisconnectWallet();
+        }
+    }
+
+    private void OnSolanaWalletConnected(string walletAddress)
+    {
+        if (_walletAddressText != null && !string.IsNullOrEmpty(walletAddress))
+        {
+            // Show truncated address with bounds check
+            string truncated;
+            if (walletAddress.Length >= 8)
+            {
+                truncated = walletAddress.Substring(0, 4) + "..." + walletAddress.Substring(walletAddress.Length - 4);
+            }
+            else
+            {
+                truncated = walletAddress;
+            }
+            _walletAddressText.text = truncated;
+        }
+        if (_connectWalletButton != null)
+        {
+            _connectWalletButton.SetActive(false);
+        }
+    }
+
+    private void OnSolanaWalletDisconnected()
+    {
+        Debug.Log("Wallet disconnected");
+        if (_walletAddressText != null)
+        {
+            _walletAddressText.text = "";
+        }
+        if (_connectWalletButton != null)
+        {
+            _connectWalletButton.SetActive(true);
+        }
+    }
+
+    private void OnSolanaError(string error)
+    {
+        Debug.LogError("Solana Error: " + error);
+    }
+
+    private void OnDestroy()
+    {
+        if (SolanaManager.Instance != null)
+        {
+            SolanaManager.Instance.OnWalletConnected -= OnSolanaWalletConnected;
+            SolanaManager.Instance.OnWalletDisconnected -= OnSolanaWalletDisconnected;
+            SolanaManager.Instance.OnError -= OnSolanaError;
         }
     }
     #endregion

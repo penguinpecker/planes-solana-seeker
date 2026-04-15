@@ -43,12 +43,11 @@ namespace Amar
 
             }
 
-            Vector3 mousePos = _joystickImage.transform.localPosition ;
-            Debug.Log("Player pos" + _player.transform.position.x);
-            Debug.Log("mouse pod " + mousePos.x +"   "+ mousePos.y);
-            Debug.Log("subtraction" + (_player.transform.position.x - mousePos.x));
-
-             _player.transform.up = new Vector2(mousePos.x- _player.transform.position.x, mousePos.y- _player.transform.position.y).normalized;
+            Vector3 mousePos = _joystickImage.transform.localPosition;
+            if (_player != null)
+            {
+                _player.transform.up = new Vector2(mousePos.x - _player.transform.position.x, mousePos.y - _player.transform.position.y).normalized;
+            }
             //Debug.Log("Player pos" + mousePos);
 
             /*  if (Mathf.Abs(posVector.z) > Mathf.Abs(posVector.x))

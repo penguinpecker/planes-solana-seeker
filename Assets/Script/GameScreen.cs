@@ -32,9 +32,11 @@ public class GameScreen : MonoBehaviour
 		
 	}
 	
-	// Update is called once per frame
-	void Update ()
+    // Update is called once per frame
+    void Update()
     {
+        if (Score == null) return;
+
         time += Time.deltaTime;
         minutes = Mathf.Floor(time / 60);
         seconds = time % 60;
@@ -43,12 +45,10 @@ public class GameScreen : MonoBehaviour
         if (secondsV < 10)
         {
             Score.text = minutes + ":0" + secondsV.ToString();
-
         }
         else
         {
             Score.text = minutes + ":" + secondsV.ToString();
-           
         }
     }
 

@@ -25,19 +25,26 @@ public class Missiles : MonoBehaviour
 
     #region Private_Variable
     private int Index;
-    private Rigidbody2D _rb;
+    private Coroutine _spawnCoroutine;
     #endregion
 
 
     #region Unity_callback
     public void OnEnable()
     {
+        // Clear to prevent duplicates
+        spawnStaticPoint.Clear();
         foreach (Transform child in this.transform)
         {
             spawnStaticPoint.Add(child);
         }
         spawnStatus = true;
-        StartCoroutine(Spawnobj());
+
+        if (_spawnCoroutine != null)
+        {
+            StopCoroutine(_spawnCoroutine);
+        }
+        _spawnCoroutine = StartCoroutine(Spawnobj());
     }
     // Use this for initialization
     void Start()
@@ -54,7 +61,12 @@ public class Missiles : MonoBehaviour
 
     public void OnDisable()
     {
-        //StopCoroutine(Spawnobj());
+        spawnStatus = false;
+        if (_spawnCoroutine != null)
+        {
+            StopCoroutine(_spawnCoroutine);
+            _spawnCoroutine = null;
+        }
     }
     #endregion
 
@@ -70,20 +82,46 @@ public class Missiles : MonoBehaviour
     {
         while (spawnStatus)
         {
-            spawnStaticPoint[0].transform.position = spawnPoint[Random.Range(0, 9)].transform.position;
-            GameObject SpawnObj1 = Instantiate(missileobj, spawnStaticPoint[0]) as GameObject;
+            if (spawnPoint == null || spawnPoint.Count == 0 || spawnStaticPoint == null || spawnStaticPoint.Count < 4)
+            {
+                yield return new WaitForSeconds(1.0f);
+                continue;
+            }
+
+            int spawnCount = spawnPoint.Count;
+
+            if (spawnStaticPoint[0] != null && missileobj != null)
+            {
+                spawnStaticPoint[0].transform.position = spawnPoint[Random.Range(0, spawnCount)].transform.position;
+                Instantiate(missileobj, spawnStaticPoint[0]);
+            }
 
             yield return new WaitForSeconds(2.0f);
-            spawnStaticPoint[1].transform.position = spawnPoint[Random.Range(0, 9)].transform.position;
-            GameObject SpawnObj2 = Instantiate(missileobj, spawnStaticPoint[1]) as GameObject;
+            if (!spawnStatus) yield break;
+
+            if (spawnStaticPoint[1] != null && missileobj != null)
+            {
+                spawnStaticPoint[1].transform.position = spawnPoint[Random.Range(0, spawnCount)].transform.position;
+                Instantiate(missileobj, spawnStaticPoint[1]);
+            }
 
             yield return new WaitForSeconds(2.2f);
-            spawnStaticPoint[2].transform.position = spawnPoint[Random.Range(0, 9)].transform.position;
-            GameObject SpawnObj3 = Instantiate(Missilethree, spawnStaticPoint[2]) as GameObject;
+            if (!spawnStatus) yield break;
+
+            if (spawnStaticPoint[2] != null && Missilethree != null)
+            {
+                spawnStaticPoint[2].transform.position = spawnPoint[Random.Range(0, spawnCount)].transform.position;
+                Instantiate(Missilethree, spawnStaticPoint[2]);
+            }
 
             yield return new WaitForSeconds(6.2f);
-            spawnStaticPoint[3].transform.position = spawnPoint[Random.Range(0, 9)].transform.position;
-            GameObject SpawnObj4 = Instantiate(newMissileObj, spawnStaticPoint[3]) as GameObject;
+            if (!spawnStatus) yield break;
+
+            if (spawnStaticPoint[3] != null && newMissileObj != null)
+            {
+                spawnStaticPoint[3].transform.position = spawnPoint[Random.Range(0, spawnCount)].transform.position;
+                Instantiate(newMissileObj, spawnStaticPoint[3]);
+            }
 
             yield return new WaitForSeconds(spawnTime);
         }
