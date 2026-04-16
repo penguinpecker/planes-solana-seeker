@@ -64,12 +64,9 @@ public class GameManager : MonoBehaviour
     private List<int> _values;
 
     [Header("Coin Shop - Buy Coins with SOL")]
-    [SerializeField] private int _coinPackage1Amount = 200;
-    [SerializeField] private float _coinPackage1PriceSOL = 0.01f;
-    [SerializeField] private int _coinPackage2Amount = 500;
-    [SerializeField] private float _coinPackage2PriceSOL = 0.02f;
-    [SerializeField] private int _coinPackage3Amount = 1000;
-    [SerializeField] private float _coinPackage3PriceSOL = 0.05f;
+    [SerializeField] private float _consumable1000PriceSOL = 0.199f;
+    [SerializeField] private float _consumable2000PriceSOL = 0.299f;
+    [SerializeField] private float _consumable3000PriceSOL = 0.399f;
 
     [Header("Sound Control")]
     [SerializeField]
@@ -418,20 +415,20 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Coin Shop - Buy coins with SOL
-    public void BuyCoinPackage1()
+    // Coin Shop - Buy coins with SOL (hooked to the InApp panel's Buy buttons)
+    public void BuyConsumable1000()
     {
-        BuyCoinPackageWithSol(_coinPackage1Amount, _coinPackage1PriceSOL, "CoinPack1");
+        BuyCoinPackageWithSol(1000, _consumable1000PriceSOL, "Consumable1000");
     }
 
-    public void BuyCoinPackage2()
+    public void BuyConsumable2000()
     {
-        BuyCoinPackageWithSol(_coinPackage2Amount, _coinPackage2PriceSOL, "CoinPack2");
+        BuyCoinPackageWithSol(2000, _consumable2000PriceSOL, "Consumable2000");
     }
 
-    public void BuyCoinPackage3()
+    public void BuyConsumable3000()
     {
-        BuyCoinPackageWithSol(_coinPackage3Amount, _coinPackage3PriceSOL, "CoinPack3");
+        BuyCoinPackageWithSol(3000, _consumable3000PriceSOL, "Consumable3000");
     }
 
     private void BuyCoinPackageWithSol(int coinAmount, float solPrice, string packageName)

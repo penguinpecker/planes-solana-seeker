@@ -2498,8 +2498,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: 
+      - m_Target: {fileID: 2142392993}
+        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
         m_MethodName: BuyConsumable1000
         m_Mode: 1
         m_Arguments:
@@ -2751,7 +2751,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: $2.99
+  m_Text: ◎ 0.299 SOL
 --- !u!222 &286373688
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2905,7 +2905,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: $3.99
+  m_Text: ◎ 0.399 SOL
 --- !u!222 &322005348
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4809,8 +4809,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: 
+      - m_Target: {fileID: 2142392993}
+        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
         m_MethodName: BuyConsumable3000
         m_Mode: 1
         m_Arguments:
@@ -12423,7 +12423,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: $1.99
+  m_Text: ◎ 0.199 SOL
 --- !u!222 &1969961624
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12796,8 +12796,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: 
+      - m_Target: {fileID: 2142392993}
+        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
         m_MethodName: BuyConsumable2000
         m_Mode: 1
         m_Arguments:
