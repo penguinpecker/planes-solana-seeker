@@ -145,8 +145,32 @@ public class GameManager : MonoBehaviour
     #region Public_Method
     public void StartGame()
     {
+        ResetRunState();
         GetReward();
         GameScreen.Instance.time = 0;
+    }
+
+    // On restart the previous run's missiles, stars, coin count, and player
+    // transform were persisting, so the plane picked up mid-flight instead of
+    // from the start. Wipe them before GetReward resumes time.
+    private void ResetRunState()
+    {
+        PlayerObj.transform.position = _playerStartPos;
+        PlayerObj.transform.rotation = Quaternion.identity;
+
+        ExtraInt = 0;
+        if (ExtraObj != null) ExtraObj.text = "0";
+
+        foreach (GameObject m in GameObject.FindGameObjectsWithTag("Missile"))
+        {
+            if (m != null) Destroy(m);
+        }
+        foreach (GameObject s in GameObject.FindGameObjectsWithTag("ExtraObj"))
+        {
+            if (s != null) Destroy(s);
+        }
+
+        NumOfAd = 3;
     }
 
     public void HomeButton()
