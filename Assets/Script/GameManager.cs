@@ -122,6 +122,18 @@ public class GameManager : MonoBehaviour
             var go = new GameObject("LeaderboardPanel");
             go.AddComponent<LeaderboardPanelBuilder>();
         }
+        if (BackgroundMusicManager.Instance == null)
+        {
+            var go = new GameObject("BackgroundMusicManager");
+            go.AddComponent<BackgroundMusicManager>();
+        }
+    }
+
+    // Wired to the Music toggle in the Settings panel.
+    public void ToggleMusic()
+    {
+        if (BackgroundMusicManager.Instance != null)
+            BackgroundMusicManager.Instance.ToggleMusic();
     }
     void OnEnable()
     {

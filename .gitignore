@@ -126,3 +126,4 @@ Thumbs.db
 # Unity-specific extra
 /[Mm]emoryCaptures/
 *.log
+*.enc

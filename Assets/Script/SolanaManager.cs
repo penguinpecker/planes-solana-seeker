@@ -20,8 +20,8 @@ public class SolanaManager : MonoBehaviour
     public static SolanaManager Instance { get; private set; }
 
     [Header("Payment Configuration")]
-    [Tooltip("Mainnet-beta receiving wallet. Must be set in the Inspector before a mainnet build — left intentionally empty so a devnet test key can't ship by accident.")]
-    [SerializeField] private string _merchantWalletAddress = "";
+    [Tooltip("Mainnet-beta receiving wallet. Edge function must verify transfers land here too (see PLANES_MERCHANT_WALLET in supabase/functions/pl-submit-score).")]
+    [SerializeField] private string _merchantWalletAddress = "6zuPtQg1rygxNgzZmjn13YB3bqMGiMLbPAWbrbvwJykg";
 
     [Header("Editor Testing")]
     [Tooltip("In the Unity Editor, skip the real wallet flow and pretend a wallet is connected so shop UI can be exercised.")]
