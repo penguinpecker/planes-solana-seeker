@@ -176,13 +176,25 @@ public class GameManager : MonoBehaviour
         ExtraInt = 0;
         if (ExtraObj != null) ExtraObj.text = "0";
 
-        foreach (GameObject m in GameObject.FindGameObjectsWithTag("Missile"))
+        // Target the runtime-spawned instances only — the scene's Missile
+        // spawner (tagged "Missile" with Missiles.cs) and ExtraObjGenerator
+        // (tagged "ExtraObj" with ExtraObj.cs) are the *containers* that keep
+        // producing new entities. Destroying them by tag on every restart
+        // killed future spawns after the first run. Instead: find spawned
+        // missiles by their MissileObj component, and clear stars by wiping
+        // the generator's children.
+        foreach (MissileObj m in FindObjectsByType<MissileObj>(FindObjectsSortMode.None))
         {
-            if (m != null) Destroy(m);
+            if (m != null) Destroy(m.gameObject);
         }
-        foreach (GameObject s in GameObject.FindGameObjectsWithTag("ExtraObj"))
+        // GameManager has a Text field named ExtraObj, which shadows the
+        // ExtraObj class in this scope — use global:: to reach the class.
+        if (global::ExtraObj.Instance != null)
         {
-            if (s != null) Destroy(s);
+            foreach (Transform child in global::ExtraObj.Instance.transform)
+            {
+                if (child != null) Destroy(child.gameObject);
+            }
         }
 
         NumOfAd = 3;

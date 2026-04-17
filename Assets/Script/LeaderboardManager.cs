@@ -43,7 +43,9 @@ public class LeaderboardManager : MonoBehaviour
 
     // Pay the submission fee, then write the score. Two-step so if the payment
     // succeeds but the Supabase insert fails we still have the on-chain receipt
-    // and can retry the insert without charging twice.
+    // and can retry the insert without charging twice. If the wallet isn't
+    // connected, auto-trigger the MWA flow and retry after it connects — so the
+    // in-scene Submit button is self-contained and doesn't silently no-op.
     public void SubmitCurrentScore(int score)
     {
         if (SolanaManager.Instance == null)
@@ -51,11 +53,20 @@ public class LeaderboardManager : MonoBehaviour
             OnSubmitFinished?.Invoke(false, "Solana manager missing");
             return;
         }
+
         if (!SolanaManager.Instance.IsWalletConnected)
         {
-            OnSubmitFinished?.Invoke(false, "Connect your wallet first");
+            Action<string> once = null;
+            once = (addr) =>
+            {
+                SolanaManager.Instance.OnWalletConnected -= once;
+                SubmitCurrentScore(score);
+            };
+            SolanaManager.Instance.OnWalletConnected += once;
+            SolanaManager.Instance.ConnectWallet();
             return;
         }
+
         if (!SolanaManager.Instance.HasSufficientBalance(_submissionPriceSOL))
         {
             OnSubmitFinished?.Invoke(false, $"Need {_submissionPriceSOL} SOL to submit");
