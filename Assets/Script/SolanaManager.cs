@@ -165,7 +165,7 @@ public class SolanaManager : MonoBehaviour
 #if SOLANA_SDK_INSTALLED
         if (Web3.Instance != null && Web3.Instance.WalletBase != null)
         {
-            _ = Web3.Instance.UpdateBalance();
+            _ = Web3.UpdateBalance();
         }
 #endif
     }
@@ -255,7 +255,7 @@ public class SolanaManager : MonoBehaviour
         OnTransactionSuccess?.Invoke(result.Result);
         callback?.Invoke(true, result.Result);
 
-        _ = Web3.Instance.UpdateBalance();
+        _ = Web3.UpdateBalance();
     }
 #endif
 
