@@ -83,6 +83,46 @@ mono_crash.*.json
 # Keystores — never commit, ever
 *.keystore
 *.jks
+*.p12
+*.pfx
+*.pkcs12
+*.keystore.properties
 
-# APK build outputs
+# Env + secrets
+.env
+.env.*
+*.env
+secrets.json
+secrets.*.json
+
+# Service account / RPC keypair JSON (Solana CLI, Supabase, Irys, etc.)
+id.json
+*-keypair.json
+publisher-keypair.json
+
+# APK / AAB build outputs
 /Builds/
+*.apk
+*.aab
+*.ipa
+*.app.zip
+
+# Supabase local
+/supabase/.branches/
+/supabase/.temp/
+
+# dapp-publishing artifacts (NFT mint receipts, upload caches — all rebuildable)
+/dapp-publishing/build/
+/dapp-publishing/.cache/
+/dapp-publishing/*-keypair.json
+
+# IDE / OS cruft
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*~
+
+# Unity-specific extra
+/[Mm]emoryCaptures/
+*.log

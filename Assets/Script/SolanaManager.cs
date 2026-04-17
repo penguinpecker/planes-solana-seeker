@@ -20,7 +20,8 @@ public class SolanaManager : MonoBehaviour
     public static SolanaManager Instance { get; private set; }
 
     [Header("Payment Configuration")]
-    [SerializeField] private string _merchantWalletAddress = "DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj";
+    [Tooltip("Mainnet-beta receiving wallet. Must be set in the Inspector before a mainnet build — left intentionally empty so a devnet test key can't ship by accident.")]
+    [SerializeField] private string _merchantWalletAddress = "";
 
     [Header("Editor Testing")]
     [Tooltip("In the Unity Editor, skip the real wallet flow and pretend a wallet is connected so shop UI can be exercised.")]

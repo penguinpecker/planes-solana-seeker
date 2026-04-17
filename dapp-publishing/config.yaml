@@ -1,0 +1,77 @@
+# Solana dApp Store publishing manifest.
+#
+# Fill in the TODO fields, then from the repo root run:
+#   npx @solana-mobile/dapp-store-cli publish \
+#       --keypair ~/.keystores/publisher-keypair.json \
+#       --url https://api.mainnet-beta.solana.com
+#
+# A publisher keypair JSON funded with ~1 SOL covers Irys storage + a few NFT
+# mints. See https://docs.solanamobile.com/dapp-publishing/overview for the
+# end-to-end flow. Paths below are relative to this file.
+
+publisher:
+  name: TODO_PUBLISHER_NAME              # e.g. "TechavtraNew"
+  address: TODO_PUBLISHER_SOL_ADDRESS    # the wallet backing publisher-keypair.json
+  website: TODO_PUBLISHER_WEBSITE        # e.g. https://planes.xyz
+  email: TODO_PUBLISHER_EMAIL            # e.g. team@planes.xyz
+  media:
+    - purpose: icon
+      uri: ./assets/publisher-icon.png   # 512x512 square, <1 MB, PNG
+
+app:
+  name: Planes
+  android_package: com.techavtranew.planes
+  urls:
+    license_url: TODO_LICENSE_URL
+    copyright_url: TODO_COPYRIGHT_URL
+    privacy_policy_url: TODO_PRIVACY_POLICY_URL
+    website: TODO_APP_WEBSITE
+  media:
+    - purpose: icon
+      uri: ./assets/app-icon.png         # 512x512 square
+
+release:
+  media:
+    - purpose: icon
+      uri: ./assets/app-icon.png
+    - purpose: banner
+      uri: ./assets/banner.png           # 1200x600
+    - purpose: feature_graphic
+      uri: ./assets/feature-graphic.png  # 1200x600, >=72 DPI
+    - purpose: video
+      uri: ./assets/gameplay.mp4         # 30-60s gameplay clip (optional but strongly recommended)
+    - purpose: screenshot
+      uri: ./assets/screenshot-1.png     # 3+ screenshots, at least one in portrait
+    - purpose: screenshot
+      uri: ./assets/screenshot-2.png
+    - purpose: screenshot
+      uri: ./assets/screenshot-3.png
+  files:
+    - purpose: install
+      uri: ../Builds/planes.apk          # signed release APK produced by BuildScript.BuildAndroid
+  catalog:
+    en-US:
+      name: Planes
+      short_description: Dodge missiles, collect coins, climb an on-chain leaderboard.
+      long_description: |
+        Classic dodge-the-missiles arcade game with full Solana Seeker support.
+        Buy coin packs with SOL, submit your run to a global leaderboard verified
+        on-chain, and climb the ranks. Built for Solana Mobile Stack (Mobile
+        Wallet Adapter + Seed Vault).
+      new_in_version: |
+        Initial release on Solana dApp Store.
+      saga_features: |
+        - Mobile Wallet Adapter for signing from Seed Vault or any installed wallet.
+        - On-chain verified leaderboard — every submission settles a SystemProgram.Transfer
+          on mainnet-beta and is validated by a Supabase edge function before being recorded.
+
+solana_mobile_dapp_publisher_portal:
+  google_store_package:                  # leave empty unless you also ship on Google Play
+  testing_instructions: |
+    1. Launch the app — the title screen shows a basket (shop) and star (leaderboard) icon.
+    2. Tap the basket, tap CONNECT WALLET — MWA dispatches to Seed Vault.
+    3. Buy a coin pack (smallest is 0.199 SOL) to exercise SendPayment.
+    4. Play a round, die, tap SUBMIT on the game-over panel — costs 0.01 SOL,
+       hits the pl-submit-score edge function which verifies the tx on-chain
+       before the row lands in Supabase.
+    5. Tap the star icon on the home screen to see the leaderboard.
