@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-// Thin PostgREST wrapper for the Supabase pl_leaderboard feature. The URL and
-// publishable key are safe to ship in the APK — Supabase is designed that way,
-// RLS (row-level security) gates what the anon role can do. Keep the heavy
-// validation (e.g. on-chain tx signature verification) for a later edge
-// function; this client trusts whatever it's told to write.
+// Thin wrapper over the Supabase PostgREST (reads) and the pl-submit-score
+// edge function (writes). The URL and publishable key are safe to ship in the
+// APK — Supabase is designed that way; RLS on pl_leaderboard now blocks anon
+// inserts outright, so the only way a score ever lands in the DB is via the
+// edge function, which verifies the transfer on-chain before accepting.
 public class SupabaseLeaderboardClient : MonoBehaviour
 {
     // Project "Gridzero" (dqvwpbggjlcumcmlliuj).
@@ -17,6 +17,7 @@ public class SupabaseLeaderboardClient : MonoBehaviour
 
     public const string LeaderboardTable = "pl_leaderboard";
     public const string LeaderboardTopView = "pl_leaderboard_top";
+    public const string SubmitFunctionSlug = "pl-submit-score";
 
     [Serializable]
     public class LeaderboardEntry
@@ -77,6 +78,13 @@ public class SupabaseLeaderboardClient : MonoBehaviour
         }
     }
 
+    [Serializable]
+    private class SubmitResponse
+    {
+        public bool ok;
+        public string error;
+    }
+
     public IEnumerator SubmitScore(string wallet, int score, string txSignature, string cluster, Action<bool, string> callback)
     {
         if (string.IsNullOrEmpty(wallet) || string.IsNullOrEmpty(txSignature))
@@ -85,7 +93,7 @@ public class SupabaseLeaderboardClient : MonoBehaviour
             yield break;
         }
 
-        string url = $"{SupabaseUrl}/rest/v1/{LeaderboardTable}";
+        string url = $"{SupabaseUrl}/functions/v1/{SubmitFunctionSlug}";
         var payload = new SubmitPayload
         {
             pl_wallet = wallet,
@@ -101,18 +109,33 @@ public class SupabaseLeaderboardClient : MonoBehaviour
             req.uploadHandler = new UploadHandlerRaw(body);
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type", "application/json");
-            req.SetRequestHeader("Prefer", "return=minimal");
             ApplyHeaders(req);
 
             yield return req.SendWebRequest();
 
-            if (req.result != UnityWebRequest.Result.Success)
+            string respText = req.downloadHandler?.text ?? "";
+            long code = req.responseCode;
+
+            // The edge function returns {"ok":true} on success and {"error":"..."}
+            // with an HTTP 4xx/5xx on failure; surface the error text to the caller
+            // so the UI can explain what went wrong.
+            if (req.result == UnityWebRequest.Result.Success && code >= 200 && code < 300)
             {
-                callback?.Invoke(false, $"{req.responseCode} {req.error}: {req.downloadHandler?.text}");
+                callback?.Invoke(true, null);
                 yield break;
             }
 
-            callback?.Invoke(true, null);
+            string reason = respText;
+            if (!string.IsNullOrEmpty(respText))
+            {
+                try
+                {
+                    var parsed = JsonUtility.FromJson<SubmitResponse>(respText);
+                    if (parsed != null && !string.IsNullOrEmpty(parsed.error)) reason = parsed.error;
+                }
+                catch { /* keep raw body */ }
+            }
+            callback?.Invoke(false, $"{code}: {reason}");
         }
     }
 
