@@ -79,3 +79,10 @@ mono_crash.*.json
 # Unity auto-recovery backups
 /[Aa]ssets/_[Rr]ecovery/
 /[Aa]ssets/_[Rr]ecovery.meta
+
+# Keystores — never commit, ever
+*.keystore
+*.jks
+
+# APK build outputs
+/Builds/

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
@@ -40,6 +41,9 @@ public static class BuildScript
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
         // Solana dApp Store requires a signed release APK; debug builds are rejected.
+        // Unity 6 keeps the signing creds on PlayerSettings.Android; setting them
+        // programmatically here in addition to the -keystorePath/-keystorePass CLI
+        // args ensures the settings are live during the BuildPipeline call.
         PlayerSettings.Android.useCustomKeystore = true;
         PlayerSettings.Android.keystoreName = keystorePath;
         PlayerSettings.Android.keystorePass = keystorePass;
