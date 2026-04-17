@@ -49,9 +49,13 @@ namespace Amar
                 _HighScoreValue = PlayerPrefs.GetInt("HighScore");
             }
             _highScore.text = _HighScoreValue.ToString();
+        }
 
-            if (LeaderboardSubmitPopup.Instance != null)
-                LeaderboardSubmitPopup.Instance.Show(_YourScoreValue);
+        // Wired to the Submit button inside the in-scene GameOverPanel.
+        public void OnSubmitScoreClick()
+        {
+            if (LeaderboardManager.Instance != null)
+                LeaderboardManager.Instance.SubmitCurrentScore(_YourScoreValue);
         }
         // Use this for initialization
         void Start() { }

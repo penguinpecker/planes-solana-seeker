@@ -122,11 +122,6 @@ public class GameManager : MonoBehaviour
             var go = new GameObject("LeaderboardPanel");
             go.AddComponent<LeaderboardPanelBuilder>();
         }
-        if (LeaderboardSubmitPopup.Instance == null)
-        {
-            var go = new GameObject("LeaderboardSubmitPopup");
-            go.AddComponent<LeaderboardSubmitPopup>();
-        }
     }
     void OnEnable()
     {

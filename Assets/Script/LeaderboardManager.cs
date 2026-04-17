@@ -10,8 +10,8 @@ public class LeaderboardManager : MonoBehaviour
     public static LeaderboardManager Instance { get; private set; }
 
     [Header("Submission Pricing")]
-    [Tooltip("SOL fee charged when a player submits a run to the leaderboard. Mirrors the shop's $-to-SOL ratio: 0.1 SOL ~= $1.")]
-    [SerializeField] private float _submissionPriceSOL = 0.1f;
+    [Tooltip("SOL fee charged when a player submits a run to the leaderboard.")]
+    [SerializeField] private float _submissionPriceSOL = 0.01f;
 
     [Header("Page Size")]
     [SerializeField] private int _pageSize = 25;

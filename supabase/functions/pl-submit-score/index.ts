@@ -3,7 +3,7 @@
 // This function calls the matching cluster's RPC to assert that
 //   - the signature exists and is at least `confirmed`,
 //   - it contains a SystemProgram transfer from pl_wallet to the merchant
-//     wallet for >= MIN_LAMPORTS,
+//     wallet for >= MIN_LAMPORTS (default 0.01 SOL = 10,000,000 lamports),
 // then inserts the row with the service role (RLS blocks anon inserts).
 // verify_jwt is off: auth is done on-chain, not via a JWT.
 
@@ -12,7 +12,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SOL_LAMPORTS = 1_000_000_000;
 const MERCHANT_WALLET = Deno.env.get("PLANES_MERCHANT_WALLET") ?? "DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj";
-const MIN_LAMPORTS = Number(Deno.env.get("PLANES_MIN_LAMPORTS") ?? `${Math.floor(0.1 * SOL_LAMPORTS)}`);
+const MIN_LAMPORTS = Number(Deno.env.get("PLANES_MIN_LAMPORTS") ?? `${Math.floor(0.01 * SOL_LAMPORTS)}`);
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
