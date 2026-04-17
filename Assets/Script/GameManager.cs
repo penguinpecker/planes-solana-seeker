@@ -570,10 +570,79 @@ public class GameManager : MonoBehaviour
             Debug.Log($"Added {coinAmount} coins to balance!");
             // Close the in-app panel
             InAppPanelClose();
+
+            // Fire-and-forget: record the purchase in Supabase so the backend
+            // has an indexed, on-chain-verified row for analytics. The user
+            // already got their coins locally — a failed DB write doesn't
+            // block gameplay, it just means one row is missing from the
+            // dashboard that can be reconciled against the merchant wallet's
+            // on-chain history later.
+            string pkg = coinAmount == 1000 ? "coins_1000"
+                       : coinAmount == 2000 ? "coins_2000"
+                       : coinAmount == 3000 ? "coins_3000"
+                       : null;
+            if (pkg != null) StartCoroutine(RecordPurchase(pkg, transactionResult));
         }
         else
         {
             Debug.LogError($"Payment failed: {transactionResult}");
+        }
+    }
+
+    [System.Serializable]
+    private class PurchasePayload
+    {
+        public string pl_wallet;
+        public string pl_package;
+        public string pl_tx_signature;
+        public string pl_cluster;
+    }
+
+    private System.Collections.IEnumerator RecordPurchase(string pkg, string txSignature)
+    {
+        if (SolanaManager.Instance == null || !SolanaManager.Instance.IsWalletConnected) yield break;
+
+        string cluster = "mainnet-beta";
+#if SOLANA_SDK_INSTALLED
+        if (Solana.Unity.SDK.Web3.Instance != null)
+        {
+            switch (Solana.Unity.SDK.Web3.Instance.rpcCluster)
+            {
+                case Solana.Unity.SDK.RpcCluster.MainNet: cluster = "mainnet-beta"; break;
+                case Solana.Unity.SDK.RpcCluster.DevNet:  cluster = "devnet"; break;
+                case Solana.Unity.SDK.RpcCluster.TestNet: cluster = "testnet"; break;
+            }
+        }
+#endif
+
+        var payload = new PurchasePayload
+        {
+            pl_wallet = SolanaManager.Instance.WalletAddress,
+            pl_package = pkg,
+            pl_tx_signature = txSignature,
+            pl_cluster = cluster
+        };
+        string json = UnityEngine.JsonUtility.ToJson(payload);
+        string url = SupabaseLeaderboardClient.SupabaseUrl + "/functions/v1/pl-submit-purchase";
+
+        using (var req = new UnityEngine.Networking.UnityWebRequest(url, "POST"))
+        {
+            byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
+            req.uploadHandler = new UnityEngine.Networking.UploadHandlerRaw(body);
+            req.downloadHandler = new UnityEngine.Networking.DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            req.SetRequestHeader("apikey", SupabaseLeaderboardClient.SupabaseAnonKey);
+            req.SetRequestHeader("Authorization", "Bearer " + SupabaseLeaderboardClient.SupabaseAnonKey);
+            yield return req.SendWebRequest();
+
+            if (req.result == UnityEngine.Networking.UnityWebRequest.Result.Success && req.responseCode < 300)
+            {
+                Debug.Log($"[Purchases] Recorded {pkg} for {txSignature.Substring(0, System.Math.Min(10, txSignature.Length))}…");
+            }
+            else
+            {
+                Debug.LogWarning($"[Purchases] Record failed ({req.responseCode}): {req.downloadHandler?.text}");
+            }
         }
     }
 
