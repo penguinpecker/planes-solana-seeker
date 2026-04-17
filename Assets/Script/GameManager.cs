@@ -133,8 +133,16 @@ public class GameManager : MonoBehaviour
             WatchAd.SetActive(false);
         }
         Missiles.SetActive(false);
+        // Force a clean HomeScreen-only state on launch so the SettingPanel,
+        // PausePanel, GameOver, etc. left active in the scene don't render on
+        // top of the home screen when the game first opens.
         HomeScreen.SetActive(true);
         GamePanel.SetActive(false);
+        if (SettingPanel != null) SettingPanel.SetActive(false);
+        if (PausePanel != null) PausePanel.SetActive(false);
+        if (GameOver != null) GameOver.SetActive(false);
+        if (InappPanel != null) InappPanel.SetActive(false);
+        if (RewardPanel != null) RewardPanel.SetActive(false);
         CurrentCase();
         _conImage.sprite = buttonImage[ContNum];
 
@@ -491,10 +499,21 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // Check if wallet is connected
+        // Previously: if the wallet wasn't connected, this method would kick
+        // off ConnectWallet and silently return — so the first Buy tap opened
+        // the wallet prompt, and the user had to tap Buy a second time after
+        // authorizing. Now queue the purchase to auto-retry as soon as
+        // OnWalletConnected fires, so a single tap always reaches the payment.
         if (!SolanaManager.Instance.IsWalletConnected)
         {
-            Debug.Log("Wallet not connected. Initiating connection...");
+            Debug.Log("Wallet not connected. Initiating connection and queuing purchase...");
+            System.Action<string> once = null;
+            once = (_) =>
+            {
+                SolanaManager.Instance.OnWalletConnected -= once;
+                BuyCoinPackageWithSol(coinAmount, solPrice, packageName);
+            };
+            SolanaManager.Instance.OnWalletConnected += once;
             ConnectSolanaWallet();
             return;
         }
