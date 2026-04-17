@@ -4,11 +4,12 @@
     android:versionCode="1"
     android:versionName="1.0">
 
-    <!-- Required permissions for Solana Mobile -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Required for wallet deep links -->
+    <!-- Mobile Wallet Adapter intent discovery. Seeker looks for any
+         installed wallet (Seed Vault, Phantom, Solflare, etc.) that
+         handles these actions and routes our intent to one of them. -->
     <queries>
         <intent>
             <action android:name="solana-wallet:///v1/authorize" />
@@ -22,14 +23,13 @@
         <intent>
             <action android:name="solana-wallet:///v1/sign_messages" />
         </intent>
-        <!-- Phantom wallet -->
+        <package android:name="com.solanamobile.seedvault" />
         <package android:name="app.phantom" />
-        <!-- Solflare wallet -->
         <package android:name="com.solflare.mobile" />
     </queries>
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/app_icon"
         android:label="@string/app_name"
         android:supportsRtl="true"
@@ -47,14 +47,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <!-- Deep link for wallet callbacks -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="planes-solana" android:host="callback" />
             </intent-filter>
 
             <meta-data android:name="unityplayer.UnityActivity" android:value="true" />

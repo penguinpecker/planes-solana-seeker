@@ -1,41 +1,35 @@
 using System;
 using System.Collections;
-using System.Threading.Tasks;
 using UnityEngine;
 
 #if SOLANA_SDK_INSTALLED
 using Solana.Unity.SDK;
 using Solana.Unity.Wallet;
-using Solana.Unity.Rpc;
-using Solana.Unity.Rpc.Models;
-using Solana.Unity.Rpc.Builders;
-using Solana.Unity.Programs;
+using Solana.Unity.Rpc.Types;
 #endif
 
-/// <summary>
-/// SolanaManager handles wallet connectivity for Solana Seeker dApp Store.
-/// Integrates with Solana.Unity-SDK for real blockchain transactions.
-/// </summary>
+// Wallet bridge for the Solana Seeker dApp Store build. Wraps the
+// Solana.Unity-SDK's Web3 singleton so the rest of the game (GameManager,
+// ShopUIBuilder) can stay agnostic of the SDK. On Seeker / Android this
+// routes through Mobile Wallet Adapter via an Android intent handshake,
+// which hits Seed Vault + any installed MWA-compatible wallet (Phantom,
+// Solflare). The legacy "phantom://" custom URL scheme this class used to
+// use does not work on Seeker and has been removed.
 public class SolanaManager : MonoBehaviour
 {
     public static SolanaManager Instance { get; private set; }
 
-    [Header("Wallet Configuration")]
-    [SerializeField] private string _rpcUrl = "https://api.mainnet-beta.solana.com";
-    [SerializeField] private bool _useDevnet = true; // Use devnet for testing
-
     [Header("Payment Configuration")]
-    [SerializeField] private string _merchantWalletAddress = "DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj"; // Devnet test wallet
+    [SerializeField] private string _merchantWalletAddress = "DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj";
 
-    [Header("Deep Link Configuration")]
-    [SerializeField] private string _appScheme = "planes-solana";
+    [Header("Editor Testing")]
+    [Tooltip("In the Unity Editor, skip the real wallet flow and pretend a wallet is connected so shop UI can be exercised.")]
+    [SerializeField] private bool _simulateInEditor = true;
 
-    // Wallet state
-    private bool _isWalletConnected = false;
+    private bool _isWalletConnected;
     private string _walletAddress = "";
-    private float _walletBalance = 0f;
+    private float _walletBalance;
 
-    // Events
     public event Action<string> OnWalletConnected;
     public event Action OnWalletDisconnected;
     public event Action<string> OnTransactionSuccess;
@@ -43,379 +37,250 @@ public class SolanaManager : MonoBehaviour
     public event Action<string> OnError;
     public event Action<float> OnBalanceUpdated;
 
-    // Properties
     public bool IsWalletConnected => _isWalletConnected;
     public string WalletAddress => _walletAddress;
     public float WalletBalance => _walletBalance;
-    public string RpcUrl => _useDevnet ? "https://api.devnet.solana.com" : _rpcUrl;
     public string MerchantWallet => _merchantWalletAddress;
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
     {
-        Debug.Log("[SolanaManager] Initialized");
-        Debug.Log("[SolanaManager] RPC: " + RpcUrl);
-        Debug.Log("[SolanaManager] Network: " + (_useDevnet ? "Devnet (Testing)" : "Mainnet"));
-
-        // Check for deep link on start (wallet callback)
-        CheckDeepLink();
-    }
-
-    private void CheckDeepLink()
-    {
-        // Handle deep link callback from wallet app
-        string deepLink = Application.absoluteURL;
-        if (!string.IsNullOrEmpty(deepLink) && deepLink.Contains(_appScheme))
-        {
-            Debug.Log("[SolanaManager] Deep link received: " + deepLink);
-            HandleWalletCallback(deepLink);
-        }
-    }
-
-    private void HandleWalletCallback(string deepLink)
-    {
-        // Parse wallet response from deep link
-        // Format: planes-solana://callback?address=WALLET_ADDRESS&signature=TX_SIG
-        try
-        {
-            Uri uri = new Uri(deepLink);
-            string query = uri.Query;
-
-            if (query.Contains("address="))
-            {
-                string address = GetQueryParam(query, "address");
-                if (!string.IsNullOrEmpty(address))
-                {
-                    OnWalletConnectedInternal(address);
-                }
-            }
-
-            if (query.Contains("signature="))
-            {
-                string signature = GetQueryParam(query, "signature");
-                if (!string.IsNullOrEmpty(signature))
-                {
-                    OnTransactionSuccess?.Invoke(signature);
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError("[SolanaManager] Failed to parse deep link: " + e.Message);
-        }
-    }
-
-    private string GetQueryParam(string query, string param)
-    {
-        string[] pairs = query.TrimStart('?').Split('&');
-        foreach (string pair in pairs)
-        {
-            string[] kv = pair.Split('=');
-            if (kv.Length == 2 && kv[0] == param)
-            {
-                return Uri.UnescapeDataString(kv[1]);
-            }
-        }
-        return null;
-    }
-
-    /// <summary>
-    /// Connect to a Solana wallet using Mobile Wallet Adapter or Phantom deep link
-    /// </summary>
-    public void ConnectWallet()
-    {
-        Debug.Log("[SolanaManager] Attempting to connect wallet...");
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-        // On Android (Solana Seeker), use Phantom/Solflare deep link
-        ConnectViaDeepLink();
-#elif UNITY_EDITOR
-        // In editor, simulate connection for testing
-        SimulateWalletConnection();
-#else
-        OnError?.Invoke("Wallet connection not supported on this platform");
+#if SOLANA_SDK_INSTALLED
+        EnsureWeb3Controller();
+        Web3.OnLogin += HandleSdkLogin;
+        Web3.OnLogout += HandleSdkLogout;
+        Web3.OnBalanceChange += HandleSdkBalanceChange;
 #endif
     }
 
-    private void ConnectViaDeepLink()
+    private void OnDestroy()
     {
-        // Phantom deep link format for connect
-        string callbackUrl = Uri.EscapeDataString($"{_appScheme}://callback");
-        string cluster = _useDevnet ? "devnet" : "mainnet-beta";
-
-        // Try Phantom first
-        string phantomUrl = $"phantom://v1/connect?app_url={callbackUrl}&cluster={cluster}&redirect_link={callbackUrl}";
-
-        Debug.Log("[SolanaManager] Opening wallet: " + phantomUrl);
-        Application.OpenURL(phantomUrl);
+#if SOLANA_SDK_INSTALLED
+        Web3.OnLogin -= HandleSdkLogin;
+        Web3.OnLogout -= HandleSdkLogout;
+        Web3.OnBalanceChange -= HandleSdkBalanceChange;
+#endif
     }
 
-    private void SimulateWalletConnection()
+#if SOLANA_SDK_INSTALLED
+    private static void EnsureWeb3Controller()
     {
-        // For editor testing - simulate a connected wallet
-        Debug.Log("[SolanaManager] Simulating wallet connection for editor testing...");
-
-        // Use a test wallet address (this is just for UI testing in editor)
-        string testAddress = "So11111111111111111111111111111111111111112";
-        OnWalletConnectedInternal(testAddress);
-
-        // Simulate some balance
-        _walletBalance = 1.5f;
-        OnBalanceUpdated?.Invoke(_walletBalance);
-
-        if (GameManager.Instance != null)
+        if (Web3.Instance != null) return;
+        var prefab = Resources.Load<GameObject>("SolanaUnitySDK/[WalletController]");
+        if (prefab == null)
         {
-            GameManager.Instance.UpdateSolBalanceDisplay(_walletBalance);
+            Debug.LogError("[SolanaManager] Missing Resources/SolanaUnitySDK/[WalletController] prefab. Import it from the Solana.Unity-SDK sample.");
+            return;
         }
+        Instantiate(prefab).name = "[WalletController]";
     }
 
-    /// <summary>
-    /// Disconnect the wallet
-    /// </summary>
-    public void DisconnectWallet()
+    private void HandleSdkLogin(Account account)
     {
-        Debug.Log("[SolanaManager] Disconnecting wallet...");
+        string publicKey = account.PublicKey.Key;
+        _isWalletConnected = true;
+        _walletAddress = publicKey;
+        Debug.Log("[SolanaManager] Wallet connected via MWA: " + publicKey);
+        OnWalletConnected?.Invoke(publicKey);
+    }
+
+    private void HandleSdkLogout()
+    {
+        bool wasConnected = _isWalletConnected;
         _isWalletConnected = false;
         _walletAddress = "";
         _walletBalance = 0f;
-        OnWalletDisconnected?.Invoke();
+        Debug.Log("[SolanaManager] Wallet disconnected");
+        if (wasConnected) OnWalletDisconnected?.Invoke();
+        OnBalanceUpdated?.Invoke(0f);
     }
 
-    /// <summary>
-    /// Get SOL balance for connected wallet
-    /// </summary>
-    public void GetBalance(Action<float> callback)
+    private void HandleSdkBalanceChange(double balance)
     {
-        if (!_isWalletConnected)
+        _walletBalance = (float)balance;
+        OnBalanceUpdated?.Invoke(_walletBalance);
+        if (GameManager.Instance != null) GameManager.Instance.UpdateSolBalanceDisplay(_walletBalance);
+    }
+#endif
+
+    public void ConnectWallet()
+    {
+        Debug.Log("[SolanaManager] ConnectWallet");
+
+#if UNITY_EDITOR
+        if (_simulateInEditor)
         {
-            callback?.Invoke(0f);
+            SimulateConnect();
             return;
         }
+#endif
 
-        StartCoroutine(FetchBalanceCoroutine(callback));
-    }
-
-    private IEnumerator FetchBalanceCoroutine(Action<float> callback)
-    {
-        string url = RpcUrl;
-        string jsonRequest = $"{{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getBalance\",\"params\":[\"{_walletAddress}\"]}}";
-
-        using (var request = new UnityEngine.Networking.UnityWebRequest(url, "POST"))
+#if SOLANA_SDK_INSTALLED
+        EnsureWeb3Controller();
+        if (Web3.Instance == null)
         {
-            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonRequest);
-            request.uploadHandler = new UnityEngine.Networking.UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new UnityEngine.Networking.DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
-            {
-                try
-                {
-                    string response = request.downloadHandler.text;
-                    // Parse JSON response to get lamports
-                    // Response format: {"jsonrpc":"2.0","result":{"context":{"slot":123},"value":1000000000},"id":1}
-
-                    int valueIndex = response.IndexOf("\"value\":");
-                    if (valueIndex != -1)
-                    {
-                        int start = valueIndex + 8;
-                        int end = response.IndexOf("}", start);
-                        string valueStr = response.Substring(start, end - start).Trim();
-
-                        if (long.TryParse(valueStr, out long lamports))
-                        {
-                            _walletBalance = lamports / 1000000000f; // Convert lamports to SOL
-                            Debug.Log($"[SolanaManager] Balance: {_walletBalance} SOL");
-                            callback?.Invoke(_walletBalance);
-                            OnBalanceUpdated?.Invoke(_walletBalance);
-
-                            if (GameManager.Instance != null)
-                            {
-                                GameManager.Instance.UpdateSolBalanceDisplay(_walletBalance);
-                            }
-                            yield break;
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError("[SolanaManager] Failed to parse balance: " + e.Message);
-                }
-            }
-            else
-            {
-                Debug.LogError("[SolanaManager] Failed to fetch balance: " + request.error);
-            }
-
-            callback?.Invoke(0f);
+            OnError?.Invoke("Solana SDK controller missing from scene");
+            return;
         }
+        Web3.Instance.LoginWithWalletAdapter();
+#else
+        OnError?.Invoke("Solana SDK not installed (define SOLANA_SDK_INSTALLED)");
+#endif
     }
 
-    /// <summary>
-    /// Send SOL payment for purchase
-    /// </summary>
+    public void DisconnectWallet()
+    {
+#if SOLANA_SDK_INSTALLED
+        if (Web3.Instance != null && Web3.Instance.WalletBase != null)
+        {
+            Web3.Instance.Logout();
+            return;
+        }
+#endif
+        HandleLocalDisconnect();
+    }
+
+    private void HandleLocalDisconnect()
+    {
+        bool wasConnected = _isWalletConnected;
+        _isWalletConnected = false;
+        _walletAddress = "";
+        _walletBalance = 0f;
+        if (wasConnected) OnWalletDisconnected?.Invoke();
+        OnBalanceUpdated?.Invoke(0f);
+    }
+
+    public void RefreshBalance()
+    {
+#if SOLANA_SDK_INSTALLED
+        if (Web3.Instance != null && Web3.Instance.WalletBase != null)
+        {
+            _ = Web3.Instance.UpdateBalance();
+        }
+#endif
+    }
+
+    public bool HasSufficientBalance(float amount) => _isWalletConnected && _walletBalance >= amount;
+
     public void SendPayment(float solAmount, string itemName, Action<bool, string> callback)
     {
         if (!_isWalletConnected)
         {
-            callback?.Invoke(false, "Wallet not connected");
             OnError?.Invoke("Please connect your wallet first");
+            callback?.Invoke(false, "Wallet not connected");
             return;
         }
-
         if (string.IsNullOrEmpty(_merchantWalletAddress))
         {
-            Debug.LogError("[SolanaManager] Merchant wallet address not set!");
+            Debug.LogError("[SolanaManager] Merchant wallet address not set");
             callback?.Invoke(false, "Payment configuration error");
             return;
         }
-
         if (_walletBalance < solAmount)
         {
-            callback?.Invoke(false, "Insufficient balance");
             OnError?.Invoke($"Insufficient balance. Need {solAmount} SOL, have {_walletBalance} SOL");
+            callback?.Invoke(false, "Insufficient balance");
             return;
         }
 
-        Debug.Log($"[SolanaManager] Initiating payment of {solAmount} SOL for {itemName}");
+#if UNITY_EDITOR
+        if (_simulateInEditor)
+        {
+            StartCoroutine(SimulatePayment(solAmount, itemName, callback));
+            return;
+        }
+#endif
 
-#if UNITY_ANDROID && !UNITY_EDITOR
-        // On Android, open wallet app for signing
-        SendPaymentViaDeepLink(solAmount, itemName, callback);
-#elif UNITY_EDITOR
-        // In editor, simulate successful payment
-        SimulatePayment(solAmount, itemName, callback);
+#if SOLANA_SDK_INSTALLED
+        StartCoroutine(SendPaymentCoroutine(solAmount, itemName, callback));
 #else
-        callback?.Invoke(false, "Payments not supported on this platform");
+        callback?.Invoke(false, "Solana SDK not installed");
 #endif
     }
 
-    private void SendPaymentViaDeepLink(float solAmount, string itemName, Action<bool, string> callback)
+#if SOLANA_SDK_INSTALLED
+    private IEnumerator SendPaymentCoroutine(float solAmount, string itemName, Action<bool, string> callback)
     {
-        // Convert SOL to lamports
-        long lamports = (long)(solAmount * 1000000000);
-
-        string callbackUrl = Uri.EscapeDataString($"{_appScheme}://callback");
-        string cluster = _useDevnet ? "devnet" : "mainnet-beta";
-
-        // Phantom deep link for transaction
-        // Note: This is a simplified approach. For production, you'd want to build a proper transaction
-        string phantomUrl = $"phantom://v1/signAndSendTransaction?" +
-            $"app_url={callbackUrl}" +
-            $"&cluster={cluster}" +
-            $"&redirect_link={callbackUrl}" +
-            $"&transaction=transfer" +
-            $"&recipient={_merchantWalletAddress}" +
-            $"&amount={lamports}";
-
-        Debug.Log("[SolanaManager] Opening wallet for payment...");
-        Application.OpenURL(phantomUrl);
-
-        // Store callback for when we return from wallet
-        StartCoroutine(WaitForTransactionCallback(callback));
-    }
-
-    private IEnumerator WaitForTransactionCallback(Action<bool, string> callback)
-    {
-        // Wait for deep link callback (timeout after 60 seconds)
-        float timeout = 60f;
-        float elapsed = 0f;
-
-        while (elapsed < timeout)
+        if (Web3.Instance == null || Web3.Instance.WalletBase == null)
         {
-            // Check if we received a transaction callback
-            string deepLink = Application.absoluteURL;
-            if (!string.IsNullOrEmpty(deepLink) && deepLink.Contains("signature="))
-            {
-                string signature = GetQueryParam(new Uri(deepLink).Query, "signature");
-                callback?.Invoke(true, signature);
-                yield break;
-            }
-
-            elapsed += Time.deltaTime;
-            yield return null;
+            callback?.Invoke(false, "Wallet not active");
+            yield break;
         }
 
-        callback?.Invoke(false, "Transaction timeout");
-    }
+        // SOL is 9 decimals; convert to lamports for SystemProgram.Transfer.
+        ulong lamports = (ulong)Mathf.RoundToInt(solAmount * 1_000_000_000f);
+        PublicKey destination;
+        try { destination = new PublicKey(_merchantWalletAddress); }
+        catch (Exception e)
+        {
+            Debug.LogError($"[SolanaManager] Bad merchant pubkey: {e.Message}");
+            callback?.Invoke(false, "Bad merchant address");
+            yield break;
+        }
 
-    private void SimulatePayment(float solAmount, string itemName, Action<bool, string> callback)
+        Debug.Log($"[SolanaManager] Signing {solAmount} SOL ({lamports} lamports) transfer for {itemName}");
+        var task = Web3.Instance.WalletBase.Transfer(destination, lamports, Commitment.Confirmed);
+        while (!task.IsCompleted) yield return null;
+
+        if (task.IsFaulted || task.Result == null)
+        {
+            string err = task.Exception?.InnerException?.Message ?? "Unknown wallet error";
+            Debug.LogError($"[SolanaManager] Transfer faulted: {err}");
+            OnTransactionFailed?.Invoke(err);
+            callback?.Invoke(false, err);
+            yield break;
+        }
+
+        var result = task.Result;
+        if (!result.WasSuccessful || string.IsNullOrEmpty(result.Result))
+        {
+            string err = result.Reason ?? result.ErrorData?.ToString() ?? "Transfer rejected";
+            Debug.LogError($"[SolanaManager] Transfer rejected: {err}");
+            OnTransactionFailed?.Invoke(err);
+            callback?.Invoke(false, err);
+            yield break;
+        }
+
+        Debug.Log($"[SolanaManager] Transfer success. Signature: {result.Result}");
+        OnTransactionSuccess?.Invoke(result.Result);
+        callback?.Invoke(true, result.Result);
+
+        _ = Web3.Instance.UpdateBalance();
+    }
+#endif
+
+    // --- Editor-only simulation ---
+
+    private void SimulateConnect()
     {
-        Debug.Log($"[SolanaManager] Simulating payment of {solAmount} SOL for {itemName}");
-
-        // Simulate transaction delay
-        StartCoroutine(SimulatePaymentCoroutine(solAmount, callback));
+        const string testAddress = "So11111111111111111111111111111111111111112";
+        _isWalletConnected = true;
+        _walletAddress = testAddress;
+        _walletBalance = 1.5f;
+        OnWalletConnected?.Invoke(testAddress);
+        OnBalanceUpdated?.Invoke(_walletBalance);
+        if (GameManager.Instance != null) GameManager.Instance.UpdateSolBalanceDisplay(_walletBalance);
     }
 
-    private IEnumerator SimulatePaymentCoroutine(float solAmount, Action<bool, string> callback)
+    private IEnumerator SimulatePayment(float solAmount, string itemName, Action<bool, string> callback)
     {
         yield return new WaitForSeconds(1f);
-
-        // Deduct from simulated balance
         _walletBalance -= solAmount;
         OnBalanceUpdated?.Invoke(_walletBalance);
-
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.UpdateSolBalanceDisplay(_walletBalance);
-        }
-
-        // Generate fake transaction signature for testing
+        if (GameManager.Instance != null) GameManager.Instance.UpdateSolBalanceDisplay(_walletBalance);
         string fakeSig = "SimTx_" + UnityEngine.Random.Range(100000, 999999);
-
-        Debug.Log($"[SolanaManager] Payment successful! Signature: {fakeSig}");
-        callback?.Invoke(true, fakeSig);
+        Debug.Log($"[SolanaManager] (sim) Paid {solAmount} SOL for {itemName}. Sig: {fakeSig}");
         OnTransactionSuccess?.Invoke(fakeSig);
-    }
-
-    /// <summary>
-    /// Called when wallet is successfully connected
-    /// </summary>
-    private void OnWalletConnectedInternal(string publicKey)
-    {
-        _isWalletConnected = true;
-        _walletAddress = publicKey;
-        Debug.Log("[SolanaManager] Wallet connected: " + publicKey);
-        OnWalletConnected?.Invoke(publicKey);
-
-        // Fetch balance after connection
-        GetBalance((balance) => {
-            Debug.Log($"[SolanaManager] Wallet balance: {balance} SOL");
-        });
-    }
-
-    /// <summary>
-    /// Refresh the wallet balance
-    /// </summary>
-    public void RefreshBalance()
-    {
-        if (_isWalletConnected)
-        {
-            GetBalance((balance) => {
-                Debug.Log($"[SolanaManager] Balance refreshed: {balance} SOL");
-            });
-        }
-    }
-
-    /// <summary>
-    /// Check if we have sufficient balance for a purchase
-    /// </summary>
-    public bool HasSufficientBalance(float amount)
-    {
-        return _isWalletConnected && _walletBalance >= amount;
+        callback?.Invoke(true, fakeSig);
     }
 }
