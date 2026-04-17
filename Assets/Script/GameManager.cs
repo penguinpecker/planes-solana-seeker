@@ -97,6 +97,7 @@ public class GameManager : MonoBehaviour
 
         // Auto-create SolanaManager if it doesn't exist
         EnsureSolanaManagerExists();
+        EnsureLeaderboardSingletons();
     }
 
     private void EnsureSolanaManagerExists()
@@ -106,6 +107,25 @@ public class GameManager : MonoBehaviour
             GameObject solanaManagerObj = new GameObject("SolanaManager");
             solanaManagerObj.AddComponent<SolanaManager>();
             Debug.Log("[GameManager] Created SolanaManager automatically");
+        }
+    }
+
+    private void EnsureLeaderboardSingletons()
+    {
+        if (LeaderboardManager.Instance == null)
+        {
+            var go = new GameObject("LeaderboardManager");
+            go.AddComponent<LeaderboardManager>();
+        }
+        if (LeaderboardPanelBuilder.Instance == null)
+        {
+            var go = new GameObject("LeaderboardPanel");
+            go.AddComponent<LeaderboardPanelBuilder>();
+        }
+        if (LeaderboardSubmitPopup.Instance == null)
+        {
+            var go = new GameObject("LeaderboardSubmitPopup");
+            go.AddComponent<LeaderboardSubmitPopup>();
         }
     }
     void OnEnable()
@@ -531,6 +551,12 @@ public class GameManager : MonoBehaviour
     public void InappPanelStatus()
     {
         InappPanel.SetActive(true);
+    }
+
+    public void OpenLeaderboard()
+    {
+        if (LeaderboardPanelBuilder.Instance != null)
+            LeaderboardPanelBuilder.Instance.Show();
     }
 
     public void InAppPanelClose()

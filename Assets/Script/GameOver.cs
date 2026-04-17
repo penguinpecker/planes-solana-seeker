@@ -49,6 +49,9 @@ namespace Amar
                 _HighScoreValue = PlayerPrefs.GetInt("HighScore");
             }
             _highScore.text = _HighScoreValue.ToString();
+
+            if (LeaderboardSubmitPopup.Instance != null)
+                LeaderboardSubmitPopup.Instance.Show(_YourScoreValue);
         }
         // Use this for initialization
         void Start() { }
