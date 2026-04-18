@@ -127,6 +127,11 @@ public class GameManager : MonoBehaviour
             var go = new GameObject("BackgroundMusicManager");
             go.AddComponent<BackgroundMusicManager>();
         }
+        if (PlayerIdentity.Instance == null)
+        {
+            var go = new GameObject("PlayerIdentity");
+            go.AddComponent<PlayerIdentity>();
+        }
     }
 
     // Previously exposed a music-only toggle; removed because the existing
@@ -165,7 +170,15 @@ public class GameManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-
+        // Belt + suspenders for the "app opens into Settings" bug: if anything
+        // re-activated SettingPanel after OnEnable (scene asset loading order,
+        // third-party Awake), force it back to hidden on the first frame.
+        if (SettingPanel != null && SettingPanel.activeSelf) SettingPanel.SetActive(false);
+        if (PausePanel != null && PausePanel.activeSelf) PausePanel.SetActive(false);
+        if (GameOver != null && GameOver.activeSelf) GameOver.SetActive(false);
+        if (InappPanel != null && InappPanel.activeSelf) InappPanel.SetActive(false);
+        if (RewardPanel != null && RewardPanel.activeSelf) RewardPanel.SetActive(false);
+        if (HomeScreen != null && !HomeScreen.activeSelf) HomeScreen.SetActive(true);
     }
 
     // Update is called once per frame
@@ -361,6 +374,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("plane ID" + _planeID);
         PlayerPrefs.SetInt("PlaneID", _planeID);
         CurrentCase();
+        if (PlayerIdentity.Instance != null) PlayerIdentity.Instance.MarkDirty();
     }
 
     public void PlayerPosMinus()
@@ -371,6 +385,7 @@ public class GameManager : MonoBehaviour
         _planeID--;
         PlayerPrefs.SetInt("PlaneID", _planeID);
         CurrentCase();
+        if (PlayerIdentity.Instance != null) PlayerIdentity.Instance.MarkDirty();
     }
 
     public void CurrentCase()
@@ -429,6 +444,7 @@ public class GameManager : MonoBehaviour
         int coins = int.Parse(Coins.text) + AddCoins;
         PlayerPrefs.SetInt("TotalCoins", coins);
         Coins.text = PlayerPrefs.GetInt("TotalCoins").ToString();
+        if (PlayerIdentity.Instance != null) PlayerIdentity.Instance.MarkDirty();
     }
 
     public void RemoveCoins(int RemoveCoins)
@@ -436,6 +452,18 @@ public class GameManager : MonoBehaviour
         int coins = int.Parse(Coins.text) - RemoveCoins;
         PlayerPrefs.SetInt("TotalCoins", coins);
         Coins.text = PlayerPrefs.GetInt("TotalCoins").ToString();
+        if (PlayerIdentity.Instance != null) PlayerIdentity.Instance.MarkDirty();
+    }
+
+    // Pulled from PlayerIdentity after a remote load so the HUD and
+    // plane-chooser pick up the new values the server handed us.
+    public void RefreshFromPlayerPrefs()
+    {
+        if (Coins != null) Coins.text = PlayerPrefs.GetInt("TotalCoins", 0).ToString();
+        _planeID = PlayerPrefs.GetInt("PlaneID", 0);
+        CurrentCase();
+        SetPlaneCoins();
+        InitializeSoundState();
     }
 
     public void SetPlaneCoins()
@@ -528,8 +556,14 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // Check if user has sufficient SOL balance
-        if (!SolanaManager.Instance.HasSufficientBalance(solPrice))
+        // Previously: bail if HasSufficientBalance returned false. That killed
+        // the second leg of the auto-connect flow because OnWalletConnected
+        // fires BEFORE Web3.OnBalanceChange, so _walletBalance is still 0 when
+        // the retry runs. Only bail when the balance is actually known
+        // (> 0) AND confirmed insufficient — otherwise proceed and let the
+        // wallet/RPC reject at signing time if the user is truly underfunded.
+        if (SolanaManager.Instance.WalletBalance > 0f
+            && !SolanaManager.Instance.HasSufficientBalance(solPrice))
         {
             Debug.Log($"Insufficient SOL balance. Need {solPrice} SOL, have {SolanaManager.Instance.WalletBalance} SOL");
             return;
@@ -684,6 +718,7 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetInt("SoundOn", _isSoundOn ? 1 : 0);
         PlayerPrefs.Save();
         ApplySoundState();
+        if (PlayerIdentity.Instance != null) PlayerIdentity.Instance.MarkDirty();
     }
 
     // Apply the current sound state to audio and UI

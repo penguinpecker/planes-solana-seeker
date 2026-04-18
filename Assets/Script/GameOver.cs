@@ -52,6 +52,7 @@ namespace Amar
             {
                 _HighScoreValue = _YourScoreValue;
                 PlayerPrefs.SetInt("HighScore", _HighScoreValue);
+                if (PlayerIdentity.Instance != null) PlayerIdentity.Instance.MarkDirty();
             }
             else
             {

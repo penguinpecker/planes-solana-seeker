@@ -187,7 +187,12 @@ public class SolanaManager : MonoBehaviour
             callback?.Invoke(false, "Payment configuration error");
             return;
         }
-        if (_walletBalance < solAmount)
+        // Only reject when balance is KNOWN (> 0) AND below the price.
+        // Right after an auto-connect we haven't received the balance update
+        // yet, so treating 0 as "definitely insufficient" silently blocked the
+        // signing popup — the wallet / RPC will reject a real underfund at
+        // signing time anyway.
+        if (_walletBalance > 0f && _walletBalance < solAmount)
         {
             OnError?.Invoke($"Insufficient balance. Need {solAmount} SOL, have {_walletBalance} SOL");
             callback?.Invoke(false, "Insufficient balance");
