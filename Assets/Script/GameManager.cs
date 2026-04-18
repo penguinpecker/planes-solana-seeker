@@ -367,7 +367,7 @@ public class GameManager : MonoBehaviour
 
     public void PlayerPosPlus()
     {
-        if (_planeID > 5)
+        if (_planeID > 6)
             return;
         Debug.Log("Plaane pos plus plus");
         _planeID++;
