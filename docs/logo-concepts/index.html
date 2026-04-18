@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Planes — pilot-wings logo concepts</title>
+<style>
+  :root {
+    --red:   #d7263d;
+    --red-d: #8a0c1c;
+    --red-l: #f24c61;
+    --white: #fafafa;
+    --ink:   #1b1b1b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", sans-serif;
+    background: #f3efe9;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  header {
+    padding: 48px 24px 8px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 0.01em; }
+  header p  { margin: 0 auto; color: #666; font-size: 14px; max-width: 720px; }
+  .grid {
+    display: grid;
+    gap: 32px;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    max-width: 1180px;
+    margin: 32px auto 16px;
+    padding: 0 24px;
+  }
+  figure {
+    margin: 0; background: #fff; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.08);
+    display: flex; flex-direction: column;
+  }
+  .stage {
+    aspect-ratio: 1 / 1; width: 100%; display: grid; place-items: center; padding: 20px;
+  }
+  .stage.dark  { background: #1b1b1b; }
+  .stage.light { background: var(--white); }
+  .stage.red   { background: var(--red); }
+  figcaption { border-top: 1px solid #eee; padding: 16px 20px 20px; }
+  figcaption h2 { margin: 0 0 4px; font-size: 17px; }
+  figcaption p  { margin: 0; color: #555; font-size: 13px; }
+  .previews { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid #eee; }
+  .previews .stage { aspect-ratio: 1 / 1; padding: 14px; }
+  .previews .stage + .stage { border-left: 1px solid #eee; }
+  svg { width: 100%; height: 100%; display: block; }
+  .notes {
+    margin: 16px auto 48px; max-width: 1180px; padding: 0 24px;
+    color: #666; font-size: 12px; line-height: 1.6;
+  }
+</style>
+
+<!-- Shared SVG defs: one wing shape, one star, one P shield -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- RIGHT wing silhouette. Mirror it for the left side. -->
+    <!-- Designed as a spread aviator wing: 5 feather segments tapering down.
+         Origin is at the hub (where the wing joins the center emblem). -->
+    <symbol id="pw-wing" viewBox="0 0 220 90">
+      <!-- outer silhouette -->
+      <path d="
+        M 0 40
+        Q 40 4 110 10
+        Q 180 16 214 34
+        Q 206 44 180 48
+        Q 196 56 214 70
+        Q 180 78 110 80
+        Q 50 82 0 52 Z" fill="currentColor"/>
+      <!-- feather separation cuts (inset strokes) -->
+      <g fill="none" stroke="#fafafa" stroke-width="2.6" stroke-linecap="round" stroke-opacity=".85">
+        <path d="M 18 44 Q 80 22 164 32"/>
+        <path d="M 18 50 Q 80 38 174 46"/>
+        <path d="M 18 56 Q 80 54 180 62"/>
+        <path d="M 18 62 Q 80 68 168 74"/>
+      </g>
+      <!-- leading-edge highlight -->
+      <path d="M 6 40 Q 50 10 118 14" fill="none" stroke="#fafafa" stroke-width="1.5" stroke-opacity=".55"/>
+    </symbol>
+
+    <!-- Star (5-point) -->
+    <symbol id="pw-star" viewBox="-14 -14 28 28">
+      <polygon points="0,-13 3.5,-4 13,-4 5.5,2 8,12 0,6.5 -8,12 -5.5,2 -13,-4 -3.5,-4"
+               fill="currentColor"/>
+    </symbol>
+
+    <!-- Shield with P inside -->
+    <symbol id="pw-shield" viewBox="-60 -70 120 140">
+      <path d="M -50 -55
+               Q -50 -70 -35 -70
+               L 35 -70
+               Q 50 -70 50 -55
+               L 50 10
+               Q 50 50 0 68
+               Q -50 50 -50 10 Z"
+            fill="currentColor"/>
+      <text x="0" y="6" text-anchor="middle" dominant-baseline="middle"
+            font-family="'Arial Black', Impact, sans-serif"
+            font-weight="900" font-size="80" fill="#fafafa"
+            transform="skewX(-10)">P</text>
+    </symbol>
+
+    <!-- Horizontal laurel half-wing (flat modern) -->
+    <symbol id="pw-wingflat" viewBox="0 0 200 60">
+      <!-- 5 stacked elongated-teardrop "feathers" fanning out -->
+      <g fill="currentColor">
+        <path d="M 0 30 Q 60 20 190 24 Q 180 30 0 32 Z"/>
+        <path d="M 0 36 Q 70 32 176 38 Q 160 42 0 40 Z" opacity=".92"/>
+        <path d="M 0 46 Q 60 50 158 54 Q 140 58 0 52 Z" opacity=".82"/>
+      </g>
+      <!-- Three chevrons as feather tips -->
+      <g fill="currentColor">
+        <polygon points="110,4 196,18 174,22 108,12"/>
+        <polygon points="130,8 198,22 180,26 128,16"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+</head>
+<body>
+
+<header>
+  <h1>Planes — pilot-wings concepts</h1>
+  <p>New direction: aviator cap insignia. Spread wings, central emblem, bold wordmark beneath. Three variations — classic feathered, modern flat, minimalist monogram — all in red + white.</p>
+</header>
+
+<div class="grid">
+
+  <!-- ========== A — CLASSIC AVIATOR WINGS ========== -->
+  <figure>
+    <div class="stage light">
+      <svg viewBox="0 0 520 360" aria-label="Concept A — classic aviator wings">
+        <defs>
+          <filter id="aShadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".22"/>
+          </filter>
+        </defs>
+
+        <g filter="url(#aShadow)">
+          <!-- Star crown above shield -->
+          <g transform="translate(260 40)" color="#d7263d">
+            <use href="#pw-star" x="-18" y="-18" width="36" height="36"/>
+          </g>
+
+          <!-- Left wing (mirrored) -->
+          <g transform="translate(260 150) scale(-1 1)" color="#d7263d">
+            <use href="#pw-wing" x="0" y="-40" width="220" height="90"/>
+          </g>
+
+          <!-- Right wing -->
+          <g transform="translate(260 150)" color="#d7263d">
+            <use href="#pw-wing" x="0" y="-40" width="220" height="90"/>
+          </g>
+
+          <!-- Center shield with P -->
+          <g transform="translate(260 170)" color="#d7263d">
+            <use href="#pw-shield" x="-60" y="-70" width="120" height="140"/>
+          </g>
+        </g>
+
+        <!-- Scroll banner with PLANES wordmark -->
+        <g transform="translate(260 300)">
+          <path d="M -150 -22 L 150 -22 Q 160 0 150 22 L -150 22 Q -160 0 -150 -22 Z" fill="#d7263d"/>
+          <path d="M -150 -22 L -170 0 L -150 22" fill="#8a0c1c"/>
+          <path d="M  150 -22 L  170 0 L  150 22" fill="#8a0c1c"/>
+          <text x="0" y="6" text-anchor="middle" dominant-baseline="middle"
+                font-family="'Arial Black', Impact, sans-serif"
+                font-weight="900" font-size="32" letter-spacing="8" fill="#fafafa">PLANES</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="previews">
+      <div class="stage dark">
+        <svg viewBox="0 0 520 360">
+          <g transform="translate(260 40)"  color="#fafafa"><use href="#pw-star" x="-18" y="-18" width="36" height="36"/></g>
+          <g transform="translate(260 150) scale(-1 1)" color="#fafafa"><use href="#pw-wing" x="0" y="-40" width="220" height="90"/></g>
+          <g transform="translate(260 150)" color="#fafafa"><use href="#pw-wing" x="0" y="-40" width="220" height="90"/></g>
+          <g transform="translate(260 170)" color="#d7263d"><use href="#pw-shield" x="-60" y="-70" width="120" height="140"/></g>
+          <g transform="translate(260 300)">
+            <path d="M -150 -22 L 150 -22 Q 160 0 150 22 L -150 22 Q -160 0 -150 -22 Z" fill="#d7263d"/>
+            <text x="0" y="6" text-anchor="middle" dominant-baseline="middle"
+                  font-family="'Arial Black', Impact, sans-serif"
+                  font-weight="900" font-size="32" letter-spacing="8" fill="#fafafa">PLANES</text>
+          </g>
+        </svg>
+      </div>
+      <div class="stage red">
+        <svg viewBox="0 0 520 360">
+          <g transform="translate(260 40)"  color="#fafafa"><use href="#pw-star" x="-18" y="-18" width="36" height="36"/></g>
+          <g transform="translate(260 150) scale(-1 1)" color="#fafafa"><use href="#pw-wing" x="0" y="-40" width="220" height="90"/></g>
+          <g transform="translate(260 150)" color="#fafafa"><use href="#pw-wing" x="0" y="-40" width="220" height="90"/></g>
+          <g transform="translate(260 170)" color="#fafafa"><use href="#pw-shield" x="-60" y="-70" width="120" height="140"/></g>
+          <g transform="translate(260 300)">
+            <path d="M -150 -22 L 150 -22 Q 160 0 150 22 L -150 22 Q -160 0 -150 -22 Z" fill="#fafafa"/>
+            <text x="0" y="6" text-anchor="middle" dominant-baseline="middle"
+                  font-family="'Arial Black', Impact, sans-serif"
+                  font-weight="900" font-size="32" letter-spacing="8" fill="#d7263d">PLANES</text>
+          </g>
+        </svg>
+      </div>
+      <!-- Square 1024 app-icon crop -->
+      <div class="stage light">
+        <svg viewBox="0 0 200 200" aria-label="app icon crop">
+          <rect x="0" y="0" width="200" height="200" rx="40" fill="#d7263d"/>
+          <g transform="translate(100 100) scale(-1 1)" color="#fafafa"><use href="#pw-wing" x="0" y="-30" width="130" height="60"/></g>
+          <g transform="translate(100 100)" color="#fafafa"><use href="#pw-wing" x="0" y="-30" width="130" height="60"/></g>
+          <g transform="translate(100 112)" color="#fafafa"><use href="#pw-shield" x="-32" y="-38" width="64" height="76"/></g>
+        </svg>
+      </div>
+    </div>
+
+    <figcaption>
+      <h2>A — Classic Aviator Wings</h2>
+      <p>The full pilot-cap treatment: five-feather spread wings flanking a red "P" shield, crowned with a star, grounded on a red scroll banner. Heritage-feel but the bold shield + star keep it squarely in mobile-game territory rather than airline-pilot. App-icon crop works because the wings visually fill the tile.</p>
+    </figcaption>
+  </figure>
+
+  <!-- ========== B — MODERN FLAT WINGS ========== -->
+  <figure>
+    <div class="stage light">
+      <svg viewBox="0 0 520 320" aria-label="Concept B — modern flat wings">
+        <defs>
+          <filter id="bShadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".18"/>
+          </filter>
+        </defs>
+
+        <g filter="url(#bShadow)">
+          <!-- Left wing -->
+          <g transform="translate(260 135) scale(-1 1)" color="#d7263d">
+            <use href="#pw-wingflat" x="26" y="-30" width="200" height="60"/>
+          </g>
+          <!-- Right wing -->
+          <g transform="translate(260 135)" color="#d7263d">
+            <use href="#pw-wingflat" x="26" y="-30" width="200" height="60"/>
+          </g>
+
+          <!-- Center circle medallion -->
+          <circle cx="260" cy="135" r="54" fill="#d7263d" stroke="#fafafa" stroke-width="4"/>
+          <circle cx="260" cy="135" r="54" fill="none" stroke="#8a0c1c" stroke-width="2" transform="translate(0 2)"/>
+
+          <!-- Plane silhouette inside the medallion (top-down) -->
+          <g transform="translate(260 135)" fill="#fafafa">
+            <path d="M 0 -30
+                     L 6 -12
+                     L 34 -2
+                     L 34 4
+                     L 6 2
+                     L 4 16
+                     L 18 24
+                     L 18 30
+                     L 0 26
+                     L -18 30
+                     L -18 24
+                     L -4 16
+                     L -6 2
+                     L -34 4
+                     L -34 -2
+                     L -6 -12 Z"/>
+          </g>
+        </g>
+
+        <!-- PLANES wordmark underneath, bold italic -->
+        <g transform="translate(260 250) skewX(-14)">
+          <text text-anchor="middle" dominant-baseline="middle"
+                font-family="'Arial Black', Impact, sans-serif"
+                font-weight="900" font-size="62" letter-spacing="4"
+                fill="#d7263d" stroke="#8a0c1c" stroke-width="1.5" paint-order="stroke">PLANES</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="previews">
+      <div class="stage dark">
+        <svg viewBox="0 0 520 320">
+          <g transform="translate(260 135) scale(-1 1)" color="#d7263d"><use href="#pw-wingflat" x="26" y="-30" width="200" height="60"/></g>
+          <g transform="translate(260 135)" color="#d7263d"><use href="#pw-wingflat" x="26" y="-30" width="200" height="60"/></g>
+          <circle cx="260" cy="135" r="54" fill="#d7263d" stroke="#fafafa" stroke-width="4"/>
+          <g transform="translate(260 135)" fill="#fafafa">
+            <path d="M 0 -30 L 6 -12 L 34 -2 L 34 4 L 6 2 L 4 16 L 18 24 L 18 30 L 0 26 L -18 30 L -18 24 L -4 16 L -6 2 L -34 4 L -34 -2 L -6 -12 Z"/>
+          </g>
+          <g transform="translate(260 250) skewX(-14)">
+            <text text-anchor="middle" dominant-baseline="middle"
+                  font-family="'Arial Black', Impact, sans-serif"
+                  font-weight="900" font-size="62" letter-spacing="4" fill="#fafafa">PLANES</text>
+          </g>
+        </svg>
+      </div>
+      <div class="stage red">
+        <svg viewBox="0 0 520 320">
+          <g transform="translate(260 135) scale(-1 1)" color="#fafafa"><use href="#pw-wingflat" x="26" y="-30" width="200" height="60"/></g>
+          <g transform="translate(260 135)" color="#fafafa"><use href="#pw-wingflat" x="26" y="-30" width="200" height="60"/></g>
+          <circle cx="260" cy="135" r="54" fill="#fafafa" stroke="#fafafa" stroke-width="4"/>
+          <g transform="translate(260 135)" fill="#d7263d">
+            <path d="M 0 -30 L 6 -12 L 34 -2 L 34 4 L 6 2 L 4 16 L 18 24 L 18 30 L 0 26 L -18 30 L -18 24 L -4 16 L -6 2 L -34 4 L -34 -2 L -6 -12 Z"/>
+          </g>
+          <g transform="translate(260 250) skewX(-14)">
+            <text text-anchor="middle" dominant-baseline="middle"
+                  font-family="'Arial Black', Impact, sans-serif"
+                  font-weight="900" font-size="62" letter-spacing="4" fill="#fafafa">PLANES</text>
+          </g>
+        </svg>
+      </div>
+      <div class="stage light">
+        <svg viewBox="0 0 200 200" aria-label="app icon crop">
+          <rect x="0" y="0" width="200" height="200" rx="40" fill="#d7263d"/>
+          <g transform="translate(100 90) scale(-1 1)" color="#fafafa"><use href="#pw-wingflat" x="18" y="-22" width="140" height="42"/></g>
+          <g transform="translate(100 90)" color="#fafafa"><use href="#pw-wingflat" x="18" y="-22" width="140" height="42"/></g>
+          <circle cx="100" cy="90" r="38" fill="#fafafa"/>
+          <g transform="translate(100 90)" fill="#d7263d">
+            <path d="M 0 -22 L 4 -8 L 24 -1 L 24 3 L 4 1 L 3 12 L 12 18 L 12 22 L 0 18 L -12 22 L -12 18 L -3 12 L -4 1 L -24 3 L -24 -1 L -4 -8 Z"/>
+          </g>
+          <g transform="translate(100 160) skewX(-14)">
+            <text text-anchor="middle" dominant-baseline="middle"
+                  font-family="'Arial Black', Impact, sans-serif"
+                  font-weight="900" font-size="26" letter-spacing="2" fill="#fafafa">PLANES</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <figcaption>
+      <h2>B — Modern Flat Wings</h2>
+      <p>Same pilot-cap DNA, but flattened into 3 stacked chevron feathers per side and a crisp circular medallion holding a top-down plane silhouette. Reads as a modern app icon — no 3D, no chrome, no bevel. The wings are asymmetric-stacked so the mark has a clear direction of flight rather than being static and heraldic.</p>
+    </figcaption>
+  </figure>
+
+  <!-- ========== C — MINIMALIST MONOGRAM WINGS ========== -->
+  <figure>
+    <div class="stage light">
+      <svg viewBox="0 0 520 320" aria-label="Concept C — minimalist monogram wings">
+        <defs>
+          <filter id="cShadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".15"/>
+          </filter>
+        </defs>
+
+        <!-- Minimal wing lines — three strokes per side -->
+        <g stroke="#d7263d" stroke-width="10" stroke-linecap="round" fill="none" filter="url(#cShadow)">
+          <!-- Right side -->
+          <line x1="280" y1="130" x2="420" y2="130"/>
+          <line x1="290" y1="150" x2="400" y2="150"/>
+          <line x1="300" y1="170" x2="370" y2="170"/>
+          <!-- Left side -->
+          <line x1="240" y1="130" x2="100" y2="130"/>
+          <line x1="230" y1="150" x2="120" y2="150"/>
+          <line x1="220" y1="170" x2="150" y2="170"/>
+        </g>
+
+        <!-- Center "P" monogram inside a circle -->
+        <g transform="translate(260 150)" filter="url(#cShadow)">
+          <circle r="48" fill="#d7263d"/>
+          <text x="0" y="0" text-anchor="middle" dominant-baseline="central"
+                font-family="'Arial Black', Impact, sans-serif"
+                font-weight="900" font-size="70" fill="#fafafa"
+                transform="skewX(-10)">P</text>
+        </g>
+
+        <!-- Small star above -->
+        <g transform="translate(260 70)" color="#d7263d">
+          <use href="#pw-star" x="-12" y="-12" width="24" height="24"/>
+        </g>
+
+        <!-- Underline bar + wordmark -->
+        <line x1="120" y1="230" x2="400" y2="230" stroke="#d7263d" stroke-width="3"/>
+        <text x="260" y="262" text-anchor="middle"
+              font-family="'Arial Black', Impact, sans-serif"
+              font-weight="900" font-size="36" letter-spacing="14" fill="#1b1b1b">PLANES</text>
+      </svg>
+    </div>
+
+    <div class="previews">
+      <div class="stage dark">
+        <svg viewBox="0 0 520 320">
+          <g stroke="#fafafa" stroke-width="10" stroke-linecap="round" fill="none">
+            <line x1="280" y1="130" x2="420" y2="130"/>
+            <line x1="290" y1="150" x2="400" y2="150"/>
+            <line x1="300" y1="170" x2="370" y2="170"/>
+            <line x1="240" y1="130" x2="100" y2="130"/>
+            <line x1="230" y1="150" x2="120" y2="150"/>
+            <line x1="220" y1="170" x2="150" y2="170"/>
+          </g>
+          <g transform="translate(260 150)">
+            <circle r="48" fill="#d7263d"/>
+            <text x="0" y="0" text-anchor="middle" dominant-baseline="central"
+                  font-family="'Arial Black', Impact, sans-serif"
+                  font-weight="900" font-size="70" fill="#fafafa"
+                  transform="skewX(-10)">P</text>
+          </g>
+          <line x1="120" y1="230" x2="400" y2="230" stroke="#fafafa" stroke-width="3"/>
+          <text x="260" y="262" text-anchor="middle"
+                font-family="'Arial Black', Impact, sans-serif"
+                font-weight="900" font-size="36" letter-spacing="14" fill="#fafafa">PLANES</text>
+        </svg>
+      </div>
+      <div class="stage red">
+        <svg viewBox="0 0 520 320">
+          <g stroke="#fafafa" stroke-width="10" stroke-linecap="round" fill="none">
+            <line x1="280" y1="130" x2="420" y2="130"/>
+            <line x1="290" y1="150" x2="400" y2="150"/>
+            <line x1="300" y1="170" x2="370" y2="170"/>
+            <line x1="240" y1="130" x2="100" y2="130"/>
+            <line x1="230" y1="150" x2="120" y2="150"/>
+            <line x1="220" y1="170" x2="150" y2="170"/>
+          </g>
+          <g transform="translate(260 150)">
+            <circle r="48" fill="#fafafa"/>
+            <text x="0" y="0" text-anchor="middle" dominant-baseline="central"
+                  font-family="'Arial Black', Impact, sans-serif"
+                  font-weight="900" font-size="70" fill="#d7263d"
+                  transform="skewX(-10)">P</text>
+          </g>
+          <line x1="120" y1="230" x2="400" y2="230" stroke="#fafafa" stroke-width="3"/>
+          <text x="260" y="262" text-anchor="middle"
+                font-family="'Arial Black', Impact, sans-serif"
+                font-weight="900" font-size="36" letter-spacing="14" fill="#fafafa">PLANES</text>
+        </svg>
+      </div>
+      <div class="stage light">
+        <svg viewBox="0 0 200 200" aria-label="app icon crop">
+          <rect x="0" y="0" width="200" height="200" rx="40" fill="#fafafa"/>
+          <g stroke="#d7263d" stroke-width="9" stroke-linecap="round" fill="none">
+            <line x1="116" y1="86"  x2="180" y2="86"/>
+            <line x1="122" y1="100" x2="172" y2="100"/>
+            <line x1="84"  y1="86"  x2="20"  y2="86"/>
+            <line x1="78"  y1="100" x2="28"  y2="100"/>
+          </g>
+          <g transform="translate(100 100)">
+            <circle r="36" fill="#d7263d"/>
+            <text x="0" y="0" text-anchor="middle" dominant-baseline="central"
+                  font-family="'Arial Black', Impact, sans-serif"
+                  font-weight="900" font-size="50" fill="#fafafa"
+                  transform="skewX(-10)">P</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <figcaption>
+      <h2>C — Minimalist Monogram Wings</h2>
+      <p>Strips the pilot-cap idea down to just three red strokes per side + a red "P" disc. No feathers, no scroll, no shield — pure geometry. Scales perfectly to a favicon, stays punchy on the dark App-Store background, and the monogram reads as "Planes" even without the full wordmark.</p>
+    </figcaption>
+  </figure>
+
+</div>
+
+<div class="notes">
+  <p>Palette: red <code>#d7263d</code>, deep-red stroke <code>#8a0c1c</code>, white <code>#fafafa</code>. Wordmark uses Arial Black skewed <code>-14°</code> — ship with Eagle Bold or a licensed display italic. Each concept is shown on light, dark, and red, with a rounded-square app-icon crop as the third preview so you can see how it holds up at iOS icon size.</p>
+</div>
+
+</body>
+</html>
