@@ -270,7 +270,7 @@ PlayerSettings:
   AndroidAllowedArchitectures: -1
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: '{inproject}: smoke.keystore'
+  AndroidKeystoreName: /Users/penguinpecker/.keystores/dappstore.keystore
   AndroidKeyaliasName: dappstore
   AndroidEnableArmv9SecurityFeatures: 0
   AndroidEnableArm64MTE: 0
@@ -301,11 +301,13 @@ PlayerSettings:
     m_Icons:
     - m_Textures:
       - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
+      - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
       m_Width: 432
       m_Height: 432
       m_Kind: 2
       m_SubKind: 
     - m_Textures:
+      - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
       - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
       m_Width: 324
       m_Height: 324
@@ -313,11 +315,13 @@ PlayerSettings:
       m_SubKind: 
     - m_Textures:
       - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
+      - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
       m_Width: 216
       m_Height: 216
       m_Kind: 2
       m_SubKind: 
     - m_Textures:
+      - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
       - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
       m_Width: 162
       m_Height: 162
@@ -325,11 +329,13 @@ PlayerSettings:
       m_SubKind: 
     - m_Textures:
       - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
+      - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
       m_Width: 108
       m_Height: 108
       m_Kind: 2
       m_SubKind: 
     - m_Textures:
+      - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
       - {fileID: 2800000, guid: e7c1b3d9a5f24e08b6f27a8c4e9f2d15, type: 3}
       m_Width: 81
       m_Height: 81
