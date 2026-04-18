@@ -27,10 +27,19 @@ namespace Amar
         void Awake() { }
         void OnEnable()
         {
+            // _time sits next to the clock icon; _points sits next to the
+            // star icon. Show the raw stats the user recognises (minutes:seconds
+            // and star count) instead of the time*1.5 / stars*10 derivatives
+            // that used to display there. The total-score math below is
+            // unchanged so the leaderboard still ranks on the composite score.
             _totalTime = GameScreen.Instance.GetScore();
-            _time.text = ((int)(_totalTime * 1.5f)).ToString();
+            int minutes = Mathf.FloorToInt(_totalTime / 60f);
+            int seconds = Mathf.FloorToInt(_totalTime % 60f);
+            _time.text = string.Format("{0}:{1:D2}", minutes, seconds);
+
             _totalStar = GameManager.Instance.ExtraInt;
-            _points.text = ((int)(_totalStar * 10)).ToString();
+            _points.text = _totalStar.ToString();
+
             _YourScoreValue = ((int)(_totalTime * 1.5f)) + ((int)(_totalStar * 10));
 
             GameManager.Instance.AddCoins(_YourScoreValue);

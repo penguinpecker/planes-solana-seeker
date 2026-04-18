@@ -129,12 +129,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Wired to the Music toggle in the Settings panel.
-    public void ToggleMusic()
-    {
-        if (BackgroundMusicManager.Instance != null)
-            BackgroundMusicManager.Instance.ToggleMusic();
-    }
+    // Previously exposed a music-only toggle; removed because the existing
+    // sound button in Settings already mutes/unmutes all audio (including
+    // the background music loop) via AudioListener.pause. One switch, one
+    // source of truth.
     void OnEnable()
     {
         Coins.text = (PlayerPrefs.GetInt("TotalCoins")).ToString();
