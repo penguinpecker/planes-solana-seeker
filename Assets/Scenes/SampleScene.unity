@@ -1615,7 +1615,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &158638725
 Transform:
   m_ObjectHideFlags: 0
@@ -7119,7 +7119,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &975461709
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11861,9 +11861,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 11500000, guid: 936e6e69e2bdaec4b9b674f450f45452, type: 3}
-        m_TargetAssemblyTypeName: UnityEngine.Object, UnityEngine
-        m_MethodName: 
+      - m_Target: {fileID: 2142392993}
+        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
+        m_MethodName: ToggleSound
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -11886,15 +11886,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 7a1c3d4e5f6a7b8c9d0e1f2a3b4c5d6e, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -13299,7 +13299,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2121227433
 RectTransform:
   m_ObjectHideFlags: 0
@@ -13457,9 +13457,9 @@ MonoBehaviour:
   - {fileID: 217668335}
   _buttonText: {fileID: 462042000}
   _values: 00000000e8030000d0070000b80b0000a00f00008813000070170000
-  _soundButtonImage: {fileID: 0}
-  _soundOnSprite: {fileID: 0}
-  _soundOffSprite: {fileID: 0}
+  _soundButtonImage: {fileID: 1890091399}
+  _soundOnSprite: {fileID: 21300000, guid: 7a1c3d4e5f6a7b8c9d0e1f2a3b4c5d6e, type: 3}
+  _soundOffSprite: {fileID: 21300000, guid: 8b2d4e5f6a7b8c9d0e1f2a3b4c5d6e7f, type: 3}
 --- !u!4 &2142392994
 Transform:
   m_ObjectHideFlags: 0
