@@ -29,6 +29,10 @@ public class PlayerIdentity : MonoBehaviour
     private bool _dirty;
     private bool _busy;
 
+    // Highest PlaneID supported by the client. Must cover every PlayerPrefs
+    // "PlaneID{N}" key we might read. Keep <= 31 so the bitmask fits in int.
+    private const int MaxPlaneId = 15;
+
     [Serializable]
     private class SyncPayload
     {
@@ -38,6 +42,7 @@ public class PlayerIdentity : MonoBehaviour
         public int pl_high_score;
         public int pl_plane_id;
         public bool pl_sound_on;
+        public int pl_planes_owned;
     }
 
     [Serializable]
@@ -57,6 +62,7 @@ public class PlayerIdentity : MonoBehaviour
         public int pl_high_score;
         public int pl_plane_id;
         public bool pl_sound_on;
+        public int pl_planes_owned;
         public string pl_updated_at;
     }
 
@@ -114,6 +120,7 @@ public class PlayerIdentity : MonoBehaviour
             pl_high_score = PlayerPrefs.GetInt("HighScore", 0),
             pl_plane_id = PlayerPrefs.GetInt("PlaneID", 0),
             pl_sound_on = PlayerPrefs.GetInt("SoundOn", 1) == 1,
+            pl_planes_owned = BuildPlanesOwnedBitmask(),
         };
         string json = JsonUtility.ToJson(payload);
 
@@ -139,9 +146,17 @@ public class PlayerIdentity : MonoBehaviour
             try { resp = JsonUtility.FromJson<SyncResponse>(text); }
             catch { resp = null; }
 
-            if (resp != null && resp.ok && resp.player != null && forceLoad)
+            if (resp != null && resp.ok && resp.player != null)
             {
-                ApplyRemote(resp.player);
+                // Initial load: unconditionally apply whatever the server has.
+                // Later flushes: only apply if the server came back with MORE
+                // than we sent (i.e. wallet-based reconciliation kicked in and
+                // restored prior progress), so we don't clobber uncommitted
+                // local state on every poll.
+                if (forceLoad || RemoteHasMore(payload, resp.player))
+                {
+                    ApplyRemote(resp.player);
+                }
             }
             _dirty = false;
         }
@@ -159,6 +174,7 @@ public class PlayerIdentity : MonoBehaviour
         PlayerPrefs.SetInt("HighScore", row.pl_high_score);
         PlayerPrefs.SetInt("PlaneID", row.pl_plane_id);
         PlayerPrefs.SetInt("SoundOn", row.pl_sound_on ? 1 : 0);
+        ApplyPlanesOwnedBitmask(row.pl_planes_owned);
         PlayerPrefs.Save();
 
         if (GameManager.Instance != null && GameManager.Instance.isActiveAndEnabled)
@@ -168,6 +184,42 @@ public class PlayerIdentity : MonoBehaviour
             GameManager.Instance.RefreshFromPlayerPrefs();
         }
 
-        Debug.Log($"[PlayerIdentity] Loaded remote state: coins={row.pl_total_coins} high={row.pl_high_score} plane={row.pl_plane_id}");
+        Debug.Log($"[PlayerIdentity] Loaded remote state: coins={row.pl_total_coins} high={row.pl_high_score} plane={row.pl_plane_id} owned=0x{row.pl_planes_owned:X}");
+    }
+
+    // Union of locally-owned planes. Bit N <=> PlayerPrefs("PlaneID{N}") == 1.
+    // Bit 0 is always set so the default plane is implicit.
+    private static int BuildPlanesOwnedBitmask()
+    {
+        int mask = 1;
+        for (int i = 1; i <= MaxPlaneId; i++)
+        {
+            if (PlayerPrefs.GetInt("PlaneID" + i, 0) == 1) mask |= (1 << i);
+        }
+        return mask;
+    }
+
+    // OR the remote mask into local prefs: a plane owned on EITHER side stays
+    // owned. Never clears an existing local unlock, so if the server's copy
+    // hasn't caught up yet we don't wipe a fresh purchase.
+    private static void ApplyPlanesOwnedBitmask(int remoteMask)
+    {
+        for (int i = 0; i <= MaxPlaneId; i++)
+        {
+            bool remoteOwned = (remoteMask & (1 << i)) != 0;
+            if (remoteOwned) PlayerPrefs.SetInt("PlaneID" + i, 1);
+        }
+    }
+
+    // Did the server give us back MORE than we just sent? True when the
+    // backend's wallet-based reconciliation restored prior progress after a
+    // reinstall (coins/high-score jumped up, or the ownership bitmask picked
+    // up bits we didn't have locally).
+    private static bool RemoteHasMore(SyncPayload sent, PlayerRow got)
+    {
+        if (got.pl_total_coins > sent.pl_total_coins) return true;
+        if (got.pl_high_score > sent.pl_high_score) return true;
+        if ((got.pl_planes_owned & ~sent.pl_planes_owned) != 0) return true;
+        return false;
     }
 }
