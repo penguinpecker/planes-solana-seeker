@@ -80,4 +80,45 @@ public static class BuildScript
             throw new BuildFailedException($"Build failed with result: {summary.result}");
         }
     }
+
+    // Emulator smoke build: signs with Unity's default debug keystore so we
+    // don't need the dApp Store credentials. Output defaults to
+    // Builds/planes-debug.apk. Not shippable.
+    public static void BuildAndroidDebug()
+    {
+        string outputPath = Environment.GetEnvironmentVariable("PLANES_APK_OUTPUT")
+                             ?? Path.Combine(Directory.GetCurrentDirectory(), "Builds", "planes-debug.apk");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
+
+        PlayerSettings.Android.useCustomKeystore = false;
+        PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+        PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64 | AndroidArchitecture.ARMv7;
+
+        EditorUserBuildSettings.buildAppBundle = false;
+        // development=true so `adb run-as` works for editing PlayerPrefs on the emulator.
+        EditorUserBuildSettings.development = true;
+
+        string[] scenes = {"Assets/Scenes/SampleScene.unity"};
+
+        var options = new BuildPlayerOptions
+        {
+            scenes = scenes,
+            locationPathName = outputPath,
+            target = BuildTarget.Android,
+            options = BuildOptions.None
+        };
+
+        BuildReport report = BuildPipeline.BuildPlayer(options);
+        BuildSummary summary = report.summary;
+
+        Debug.Log($"[BuildScript] (debug) Result: {summary.result}");
+        Debug.Log($"[BuildScript] (debug) Output: {outputPath}");
+        Debug.Log($"[BuildScript] (debug) Size: {summary.totalSize} bytes");
+
+        if (summary.result != BuildResult.Succeeded)
+        {
+            throw new BuildFailedException($"Debug build failed with result: {summary.result}");
+        }
+    }
 }
