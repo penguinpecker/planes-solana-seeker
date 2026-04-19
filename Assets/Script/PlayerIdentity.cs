@@ -90,11 +90,45 @@ public class PlayerIdentity : MonoBehaviour
     {
         // Initial load: tell server who we are, receive whatever it already has.
         yield return Sync(forceLoad: true);
+        if (SolanaManager.Instance != null)
+        {
+            SolanaManager.Instance.OnWalletConnected += HandleWalletConnected;
+            SolanaManager.Instance.OnTransactionSuccess += HandleTransactionSuccess;
+        }
         StartCoroutine(FlushLoop());
+    }
+
+    private void OnDestroy()
+    {
+        if (SolanaManager.Instance != null)
+        {
+            SolanaManager.Instance.OnWalletConnected -= HandleWalletConnected;
+            SolanaManager.Instance.OnTransactionSuccess -= HandleTransactionSuccess;
+        }
     }
 
     // Call after mutating coins/high-score/plane/sound so we eventually flush.
     public void MarkDirty() => _dirty = true;
+
+    // Called by SolanaManager the moment a wallet successfully connects via
+    // MWA. Triggers an immediate sync so the server can attach the wallet to
+    // this device_id and merge in any prior wallet-linked progress (coins,
+    // plane ownership) the player earned on a previous install.
+    private void HandleWalletConnected(string publicKey)
+    {
+        _dirty = true;
+        StartCoroutine(Sync(forceLoad: true));
+    }
+
+    // Any successful on-chain transaction (coin purchase, leaderboard
+    // submission) is a strong signal that the wallet belongs to this user.
+    // Force another sync so the wallet<->device association is committed
+    // server-side and the reconciliation branch gets another chance to run.
+    private void HandleTransactionSuccess(string signature)
+    {
+        _dirty = true;
+        StartCoroutine(Sync(forceLoad: true));
+    }
 
     private IEnumerator FlushLoop()
     {
