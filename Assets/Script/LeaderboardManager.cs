@@ -67,7 +67,14 @@ public class LeaderboardManager : MonoBehaviour
             return;
         }
 
-        if (!SolanaManager.Instance.HasSufficientBalance(_submissionPriceSOL))
+        // Same guard as GameManager.BuyCoinPackageWithSol: only bail when
+        // the balance is KNOWN insufficient. OnWalletConnected fires before
+        // the SDK has pushed the balance update, so treating 0 as "broke"
+        // killed the auto-retry leg and forced the user to tap Submit a
+        // second time. Letting a true underfund fail at signing time is
+        // the right trade -- same UX the wallet gives anywhere else.
+        float balance = SolanaManager.Instance.WalletBalance;
+        if (balance > 0f && balance < _submissionPriceSOL)
         {
             OnSubmitFinished?.Invoke(false, $"Need {_submissionPriceSOL} SOL to submit");
             return;

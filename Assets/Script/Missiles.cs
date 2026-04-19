@@ -89,6 +89,12 @@ public class Missiles : MonoBehaviour
             }
 
             int spawnCount = spawnPoint.Count;
+            // Each wait gets multiplied by the current difficulty tier's
+            // gap multiplier -- tier 0 keeps the authored spacing, tier
+            // 9 shrinks to ~64% of it so missiles arrive noticeably
+            // faster late-run without completely overlapping.
+            float gapMult = DifficultyDirector.Instance != null
+                ? DifficultyDirector.Instance.MissileGapMult : 1f;
 
             if (spawnStaticPoint[0] != null && missileobj != null)
             {
@@ -96,7 +102,7 @@ public class Missiles : MonoBehaviour
                 Instantiate(missileobj, spawnStaticPoint[0]);
             }
 
-            yield return new WaitForSeconds(2.0f);
+            yield return new WaitForSeconds(2.0f * gapMult);
             if (!spawnStatus) yield break;
 
             if (spawnStaticPoint[1] != null && missileobj != null)
@@ -105,7 +111,7 @@ public class Missiles : MonoBehaviour
                 Instantiate(missileobj, spawnStaticPoint[1]);
             }
 
-            yield return new WaitForSeconds(2.2f);
+            yield return new WaitForSeconds(2.2f * gapMult);
             if (!spawnStatus) yield break;
 
             if (spawnStaticPoint[2] != null && Missilethree != null)
@@ -114,7 +120,7 @@ public class Missiles : MonoBehaviour
                 Instantiate(Missilethree, spawnStaticPoint[2]);
             }
 
-            yield return new WaitForSeconds(6.2f);
+            yield return new WaitForSeconds(6.2f * gapMult);
             if (!spawnStatus) yield break;
 
             if (spawnStaticPoint[3] != null && newMissileObj != null)
@@ -123,7 +129,7 @@ public class Missiles : MonoBehaviour
                 Instantiate(newMissileObj, spawnStaticPoint[3]);
             }
 
-            yield return new WaitForSeconds(spawnTime);
+            yield return new WaitForSeconds(spawnTime * gapMult);
         }
     }
     #endregion

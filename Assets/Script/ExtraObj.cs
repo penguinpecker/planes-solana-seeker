@@ -72,7 +72,13 @@ public class ExtraObj : MonoBehaviour
                 GameObject _starObj = Instantiate(_star, this.transform);
                 _starObj.transform.position = spawnPoints[Random.Range(0, spawnPoints.Count)].position;
             }
-            yield return new WaitForSeconds(2.0f);
+            // Star cadence tightens with the difficulty tier (2.4s at
+            // tier 0, 0.8s at tier 8+). Ramping star income alongside
+            // missile pressure keeps the mid-game feeling rich instead
+            // of just punishing.
+            float gap = DifficultyDirector.Instance != null
+                ? DifficultyDirector.Instance.StarSpawnInterval : 2.0f;
+            yield return new WaitForSeconds(gap);
         }
     }
     #endregion

@@ -37,6 +37,18 @@ public class MissileObj : MonoBehaviour
             rotateSpeed = Random.Range(Player.Instance.RoateRange[1].x, Player.Instance.RoateRange[1].y);
             speed = Random.Range(Player.Instance.SpeedRange[1].x, Player.Instance.SpeedRange[1].y);
         }
+
+        // Layer the difficulty ramp on top of the level roll. Tier 0 is
+        // the original speed/rotate; tier 9 caps at 1.72x speed and
+        // 1.45x turn rate. Baked in at spawn time so mid-flight the
+        // missile keeps the stats it was born with -- ramping a live
+        // missile mid-chase would feel unfair.
+        var diff = DifficultyDirector.Instance;
+        if (diff != null)
+        {
+            speed       *= diff.MissileSpeedMult;
+            rotateSpeed *= diff.MissileRotateMult;
+        }
     }
     // Use this for initialization
     void Start()

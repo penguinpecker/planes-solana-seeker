@@ -51,9 +51,22 @@ namespace Amar
                 _totalStar = GameManager.Instance != null ? GameManager.Instance.ExtraInt : 0;
                 if (_points != null) _points.text = _totalStar.ToString();
 
-                _YourScoreValue = ((int)(_totalTime * 1.5f)) + ((int)(_totalStar * 10));
+                // Earn rate cut 10x from the original (time*1.5 + stars*10)
+                // so the SOL-for-coins shop becomes the fast path and the
+                // grind-earned planes feel genuinely earned. A typical
+                // 60-second / 10-star run now pays ~19 base coins instead
+                // of ~190. The plane tier coin-multiplier still stacks on
+                // top, so a B52 owner (1.4x) caps at ~27 coins per that
+                // run -- ~35 decent runs to afford the next 1000-plane.
+                _YourScoreValue = ((int)(_totalTime * 0.15f)) + ((int)(_totalStar * 1));
 
-                if (GameManager.Instance != null) GameManager.Instance.AddCoins(_YourScoreValue);
+                // Leaderboard rank is computed from the un-multiplied
+                // score so owning a better plane doesn't buy you a
+                // higher leaderboard seat -- only a better wallet. The
+                // player's coin pile gets the plane's CoinMult applied
+                // via PlaneStats.ApplyCoinMultiplier before AddCoins.
+                int awarded = PlaneStats.ApplyCoinMultiplier(_YourScoreValue);
+                if (GameManager.Instance != null) GameManager.Instance.AddCoins(awarded);
 
                 if (_totalPoints != null) _totalPoints.text = _YourScoreValue.ToString();
                 if (_yourScore != null) _yourScore.text = _YourScoreValue.ToString();

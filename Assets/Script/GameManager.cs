@@ -132,6 +132,11 @@ public class GameManager : MonoBehaviour
             var go = new GameObject("PlayerIdentity");
             go.AddComponent<PlayerIdentity>();
         }
+        if (DifficultyDirector.Instance == null)
+        {
+            var go = new GameObject("DifficultyDirector");
+            go.AddComponent<DifficultyDirector>();
+        }
     }
 
     // Previously exposed a music-only toggle; removed because the existing
@@ -194,6 +199,9 @@ public class GameManager : MonoBehaviour
         ResetRunState();
         GetReward();
         GameScreen.Instance.time = 0;
+        // Start the difficulty tier clock from zero so missiles + stars
+        // ramp predictably each run.
+        if (DifficultyDirector.Instance != null) DifficultyDirector.Instance.StartRun();
     }
 
     // On restart the previous run's missiles, stars, coin count, and player
@@ -279,6 +287,10 @@ public class GameManager : MonoBehaviour
 #if UNITY_WEBGL && !UNITY_EDITOR
         Application.ExternalEval("window.parent.postMessage({ type: 'REQUEST_MINT_ON_DEATH' }, '*');");
 #endif
+
+        // Freeze the tier clock so the Game Over panel doesn't keep
+        // ramping while the player is reading their score.
+        if (DifficultyDirector.Instance != null) DifficultyDirector.Instance.StopRun();
 
         Time.timeScale = 0;
         NumOfAd--;

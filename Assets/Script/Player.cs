@@ -30,6 +30,9 @@ public class Player : MonoBehaviour
     private int LevelIndex = 0;
     [SerializeField]
     private GameObject VariousPlane;
+    // Consumed on first missile hit when the active plane has a shield
+    // perk. Reset every OnEnable via ApplyPlanePerks.
+    private bool _shieldAvailable;
     #endregion
 
     #region Unity_Callback
@@ -51,6 +54,38 @@ public class Player : MonoBehaviour
         //this.transform.position = Vector3.zero;
         //this.transform.localRotation = Quaternion.EulerAngles(Vector3.zero);
         LevelSpeed();
+        ApplyPlanePerks();
+    }
+
+    // Pull the current plane's perks (turn multiplier, magnet radius,
+    // shield flag) from PlaneStats and apply them on top of the level's
+    // base stats. Called every OnEnable so switching planes between runs
+    // takes effect immediately.
+    private void ApplyPlanePerks()
+    {
+        int planeId = PlayerPrefs.GetInt("PlaneID", 0);
+        var perks = PlaneStats.ForId(planeId);
+
+        // Scale the rotation speed the level just set. Multiplicative so
+        // Normal and High levels both benefit proportionally.
+        RotationSpeed *= perks.TurnMult;
+
+        // Shield: one free hit. Consumed in OnCollisionEnter2D below.
+        _shieldAvailable = perks.HasShield;
+
+        // Magnet: ensure we have a CoinMagnet on the player, sized to
+        // this plane's radius. Radius 0 disables it (remove component).
+        var magnet = GetComponent<CoinMagnet>();
+        if (perks.MagnetRadius > 0f)
+        {
+            if (magnet == null) magnet = gameObject.AddComponent<CoinMagnet>();
+            magnet.Radius = perks.MagnetRadius;
+            magnet.enabled = true;
+        }
+        else if (magnet != null)
+        {
+            magnet.enabled = false;
+        }
     }
     void Awake()
     {
@@ -138,6 +173,16 @@ public class Player : MonoBehaviour
         {
             if (!_protect && !_isDead)
             {
+                // B52 shield: absorb the first missile hit per run.
+                // Destroy the missile (so it doesn't keep pushing us
+                // and re-trigger) and consume the shield. Player keeps
+                // flying; next hit is lethal.
+                if (_shieldAvailable)
+                {
+                    _shieldAvailable = false;
+                    Destroy(collision.gameObject);
+                    return;
+                }
                 StartCoroutine(OnPlayerDestroy());
             }
         }
