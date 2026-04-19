@@ -33,6 +33,12 @@ public class Player : MonoBehaviour
     // Consumed on first missile hit when the active plane has a shield
     // perk. Reset every OnEnable via ApplyPlanePerks.
     private bool _shieldAvailable;
+    // Cached plane-tier perks; the ability system layers on top of
+    // these at runtime instead of overwriting.
+    private PlanePerks _activePerks;
+    // Runtime-spawned shield bubble child (sprite around the plane,
+    // visible while AbilityController.IsShieldActive).
+    private GameObject _shieldBubble;
     #endregion
 
     #region Unity_Callback
@@ -64,28 +70,74 @@ public class Player : MonoBehaviour
     private void ApplyPlanePerks()
     {
         int planeId = PlayerPrefs.GetInt("PlaneID", 0);
-        var perks = PlaneStats.ForId(planeId);
+        _activePerks = PlaneStats.ForId(planeId);
 
         // Scale the rotation speed the level just set. Multiplicative so
         // Normal and High levels both benefit proportionally.
-        RotationSpeed *= perks.TurnMult;
+        RotationSpeed *= _activePerks.TurnMult;
 
         // Shield: one free hit. Consumed in OnCollisionEnter2D below.
-        _shieldAvailable = perks.HasShield;
+        _shieldAvailable = _activePerks.HasShield;
 
-        // Magnet: ensure we have a CoinMagnet on the player, sized to
-        // this plane's radius. Radius 0 disables it (remove component).
+        // Magnet: ensure we have a CoinMagnet on the player. Radius
+        // starts at the plane's base; ability magnet will override.
+        EnsureMagnet();
+        SyncMagnetRadius();
+
+        // Bubble visual: only visible while shield ability is on.
+        EnsureShieldBubble();
+        SyncShieldBubble();
+    }
+
+    private void EnsureMagnet()
+    {
         var magnet = GetComponent<CoinMagnet>();
-        if (perks.MagnetRadius > 0f)
-        {
-            if (magnet == null) magnet = gameObject.AddComponent<CoinMagnet>();
-            magnet.Radius = perks.MagnetRadius;
-            magnet.enabled = true;
-        }
-        else if (magnet != null)
-        {
-            magnet.enabled = false;
-        }
+        if (magnet == null) magnet = gameObject.AddComponent<CoinMagnet>();
+    }
+
+    // Pick the effective magnet radius: the ability's temporary radius
+    // if the ability is live, otherwise the plane's tier radius. 0
+    // means no pull (free plane, no ability).
+    private void SyncMagnetRadius()
+    {
+        var magnet = GetComponent<CoinMagnet>();
+        if (magnet == null) return;
+        bool abilityOn = AbilityController.Instance != null &&
+                         AbilityController.Instance.IsMagnetActive;
+        float r = abilityOn ? AbilityController.MagnetAbilityRadius
+                            : _activePerks.MagnetRadius;
+        magnet.Radius = r;
+        magnet.enabled = r > 0f;
+    }
+
+    private void EnsureShieldBubble()
+    {
+        if (_shieldBubble != null) return;
+        _shieldBubble = new GameObject("ShieldBubble");
+        _shieldBubble.transform.SetParent(transform, false);
+        _shieldBubble.transform.localPosition = Vector3.zero;
+        _shieldBubble.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
+        var sr = _shieldBubble.AddComponent<SpriteRenderer>();
+        if (AbilityController.Instance != null)
+            sr.sprite = AbilityController.Instance.GetShieldBubbleSprite();
+        sr.sortingOrder = 6; // above plane sprite (sortingOrder 4)
+        _shieldBubble.SetActive(false);
+    }
+
+    private void SyncShieldBubble()
+    {
+        if (_shieldBubble == null) return;
+        bool on = AbilityController.Instance != null &&
+                  AbilityController.Instance.IsShieldActive;
+        _shieldBubble.SetActive(on);
+    }
+
+    // Called by AbilityController whenever the active ability changes
+    // so the visuals + magnet radius re-sync immediately.
+    public void OnAbilityStateChanged()
+    {
+        SyncMagnetRadius();
+        SyncShieldBubble();
     }
     void Awake()
     {
@@ -173,10 +225,20 @@ public class Player : MonoBehaviour
         {
             if (!_protect && !_isDead)
             {
-                // B52 shield: absorb the first missile hit per run.
-                // Destroy the missile (so it doesn't keep pushing us
-                // and re-trigger) and consume the shield. Player keeps
-                // flying; next hit is lethal.
+                // Shield ability (timed bubble): while active, absorb
+                // EVERY incoming missile hit. Not consumed -- the bubble
+                // blocks as long as the 30s timer is running.
+                if (AbilityController.Instance != null &&
+                    AbilityController.Instance.IsShieldActive)
+                {
+                    Destroy(collision.gameObject);
+                    return;
+                }
+
+                // B52 plane shield: absorb the first missile hit per run.
+                // Destroy the missile and consume the shield. Player
+                // keeps flying; next hit is lethal unless the ability
+                // bubble lights up.
                 if (_shieldAvailable)
                 {
                     _shieldAvailable = false;

@@ -137,6 +137,16 @@ public class GameManager : MonoBehaviour
             var go = new GameObject("DifficultyDirector");
             go.AddComponent<DifficultyDirector>();
         }
+        if (AbilityController.Instance == null)
+        {
+            var go = new GameObject("AbilityController");
+            go.AddComponent<AbilityController>();
+        }
+        if (AbilitySpawner.Instance == null)
+        {
+            var go = new GameObject("AbilitySpawner");
+            go.AddComponent<AbilitySpawner>();
+        }
     }
 
     // Previously exposed a music-only toggle; removed because the existing
@@ -202,6 +212,10 @@ public class GameManager : MonoBehaviour
         // Start the difficulty tier clock from zero so missiles + stars
         // ramp predictably each run.
         if (DifficultyDirector.Instance != null) DifficultyDirector.Instance.StartRun();
+        // Clear any leftover ability from a previous run and start
+        // dropping power-up pickups into the field.
+        if (AbilityController.Instance != null) AbilityController.Instance.Clear();
+        if (AbilitySpawner.Instance != null) AbilitySpawner.Instance.BeginRun();
     }
 
     // On restart the previous run's missiles, stars, coin count, and player
@@ -291,6 +305,9 @@ public class GameManager : MonoBehaviour
         // Freeze the tier clock so the Game Over panel doesn't keep
         // ramping while the player is reading their score.
         if (DifficultyDirector.Instance != null) DifficultyDirector.Instance.StopRun();
+        // Clear any in-flight ability buff + stop dropping new pickups.
+        if (AbilityController.Instance != null) AbilityController.Instance.Clear();
+        if (AbilitySpawner.Instance != null) AbilitySpawner.Instance.StopRun();
 
         Time.timeScale = 0;
         NumOfAd--;
