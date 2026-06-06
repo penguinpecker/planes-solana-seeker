@@ -127,3 +127,7 @@ Thumbs.db
 /[Mm]emoryCaptures/
 *.log
 *.enc
+
+# Firebase desktop/editor libs — not used by the Android build, exceed GitHub 100MB limit
+Assets/Firebase/Plugins/x86_64/
+Assets/Firebase/Plugins/x86_64.meta

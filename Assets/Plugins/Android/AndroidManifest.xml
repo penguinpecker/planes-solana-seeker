@@ -1,55 +1,63 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.techavtranew.planes"
-    android:versionCode="1"
-    android:versionName="1.0">
-
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Mobile Wallet Adapter intent discovery. Seeker looks for any
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.techavtranew.planes" android:versionCode="1" android:versionName="1.0">
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <!-- Android 13+ (Seeker is Android 14-class) requires this for any
+         notification to display; PushManager requests it at runtime. The
+         Firebase Messaging SDK also injects it via manifest merge, but we
+         keep it explicit in this hand-written manifest. -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <!-- Mobile Wallet Adapter intent discovery. Seeker looks for any
          installed wallet (Seed Vault, Phantom, Solflare, etc.) that
          handles these actions and routes our intent to one of them. -->
-    <queries>
-        <intent>
-            <action android:name="solana-wallet:///v1/authorize" />
-        </intent>
-        <intent>
-            <action android:name="solana-wallet:///v1/sign_transactions" />
-        </intent>
-        <intent>
-            <action android:name="solana-wallet:///v1/sign_and_send_transactions" />
-        </intent>
-        <intent>
-            <action android:name="solana-wallet:///v1/sign_messages" />
-        </intent>
-        <package android:name="com.solanamobile.seedvault" />
-        <package android:name="app.phantom" />
-        <package android:name="com.solflare.mobile" />
-    </queries>
-
-    <application
-        android:allowBackup="false"
-        android:icon="@mipmap/app_icon"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/UnityThemeSelector"
-        android:isGame="true">
-
-        <activity
-            android:name="com.unity3d.player.UnityPlayerActivity"
-            android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen"
-            android:exported="true"
-            android:hardwareAccelerated="true"
-            android:launchMode="singleTask"
-            android:screenOrientation="portrait">
-
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
-        </activity>
-    </application>
+  <queries>
+    <intent>
+      <action android:name="solana-wallet:///v1/authorize" />
+    </intent>
+    <intent>
+      <action android:name="solana-wallet:///v1/sign_transactions" />
+    </intent>
+    <intent>
+      <action android:name="solana-wallet:///v1/sign_and_send_transactions" />
+    </intent>
+    <intent>
+      <action android:name="solana-wallet:///v1/sign_messages" />
+    </intent>
+    <package android:name="com.solanamobile.seedvault" />
+    <package android:name="app.phantom" />
+    <package android:name="com.solflare.mobile" />
+  </queries>
+  <application android:allowBackup="false" android:icon="@mipmap/app_icon" android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/UnityThemeSelector" android:isGame="true">
+    <!-- Launcher is Firebase's MessagingUnityPlayerActivity, NOT the stock
+             com.unity3d.player.UnityPlayerActivity. It is a subclass of
+             UnityPlayerActivity (calls super on onCreate/onNewIntent) and only
+             intercepts intents that carry FCM message extras, forwarding those
+             to MessageForwardingService; everything else passes through to
+             Unity unchanged. This is REQUIRED so background/closed-app
+             notification taps reach our C# MessageReceived handler.
+             Mobile Wallet Adapter is unaffected: it returns wallet results over
+             a localhost WebSocket, never via this activity's intents.
+             REQUIRES the Firebase Unity Messaging SDK to be imported before
+             building — see docs/PUSH_NOTIFICATIONS.md. Keep launchMode=singleTask
+             and the wallet <queries> block above. -->
+    <activity android:name="com.google.firebase.MessagingUnityPlayerActivity" android:configChanges="fontScale|keyboard|keyboardHidden|locale|mnc|mcc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode|touchscreen" android:exported="true" android:hardwareAccelerated="true" android:launchMode="singleTask" android:screenOrientation="portrait" android:theme="@style/UnityThemeSelector">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+    </activity>
+    <!-- Re-delivers background FCM messages into the app. Extends
+             JobIntentService, so it is bound by the system JobScheduler and
+             must be exported=true (matches Firebase's bundled manifest). The
+             BIND_JOB_SERVICE permission restricts binding to the system, so
+             exporting it is safe — no third-party app can start it. -->
+    <service android:name="com.google.firebase.messaging.MessageForwardingService" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true" />
+    <!-- Status-bar notification icon (white plane silhouette) + accent tint.
+             Without these, backgrounded/closed-app pings render as a white
+             square because Android can't use the full-colour launcher icon in
+             the status bar. Resources live in Assets/Plugins/Android/res/. -->
+    <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_notify" />
+    <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notif_accent" />
+  </application>
 </manifest>

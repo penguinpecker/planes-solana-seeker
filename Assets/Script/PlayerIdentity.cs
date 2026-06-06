@@ -204,8 +204,15 @@ public class PlayerIdentity : MonoBehaviour
     // also prefer server since the user just expressed them there last.
     private void ApplyRemote(PlayerRow row)
     {
-        PlayerPrefs.SetInt("TotalCoins", row.pl_total_coins);
-        PlayerPrefs.SetInt("HighScore", row.pl_high_score);
+        // Monotonic apply: never let a stale or lagging server response shrink a
+        // live balance or high score (coins/high only grow here, matching the
+        // server's never-shrink merge). Planes are OR'd (never cleared). PlaneID
+        // and SoundOn come from THIS device's own returned row, so adopting them
+        // is safe.
+        int localCoins = PlayerPrefs.GetInt("TotalCoins", 0);
+        int localHigh = PlayerPrefs.GetInt("HighScore", 0);
+        PlayerPrefs.SetInt("TotalCoins", Mathf.Max(localCoins, row.pl_total_coins));
+        PlayerPrefs.SetInt("HighScore", Mathf.Max(localHigh, row.pl_high_score));
         PlayerPrefs.SetInt("PlaneID", row.pl_plane_id);
         PlayerPrefs.SetInt("SoundOn", row.pl_sound_on ? 1 : 0);
         ApplyPlanesOwnedBitmask(row.pl_planes_owned);

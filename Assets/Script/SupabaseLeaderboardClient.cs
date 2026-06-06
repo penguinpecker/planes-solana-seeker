@@ -11,9 +11,9 @@ using UnityEngine.Networking;
 // edge function, which verifies the transfer on-chain before accepting.
 public class SupabaseLeaderboardClient : MonoBehaviour
 {
-    // Project "Gridzero" (dqvwpbggjlcumcmlliuj).
-    public const string SupabaseUrl = "https://dqvwpbggjlcumcmlliuj.supabase.co";
-    public const string SupabaseAnonKey = "sb_publishable_cP9JqtSBOWihN8-xTWJyUQ_yl_RdXg8";
+    // Project "planes" (zrqepsqbicswophjzxzn) — new backend; merges legacy Gridzero via mirror.
+    public const string SupabaseUrl = "https://zrqepsqbicswophjzxzn.supabase.co";
+    public const string SupabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpycWVwc3FiaWNzd29waGp6eHpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MzczMjgsImV4cCI6MjA5NjMxMzMyOH0.WqGolreKb--V9_TIvuCeiVtffQWQdzwbLn7pqPD00vQ";
 
     public const string LeaderboardTable = "pl_leaderboard";
     public const string LeaderboardTopView = "pl_leaderboard_top";
@@ -48,7 +48,7 @@ public class SupabaseLeaderboardClient : MonoBehaviour
     {
         string url = $"{SupabaseUrl}/rest/v1/{LeaderboardTopView}" +
                      $"?select=pl_wallet,pl_score,pl_tx_signature,pl_cluster,pl_created_at" +
-                     $"&order=pl_score.desc,pl_created_at.asc" +
+                     $"&order=pl_score.desc,pl_created_at.asc,pl_tx_signature.asc" +
                      $"&limit={limit}&offset={offset}";
 
         using (var req = UnityWebRequest.Get(url))

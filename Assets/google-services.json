@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "590442702791",
+    "project_id": "planes-349b8",
+    "storage_bucket": "planes-349b8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:590442702791:android:3bbd87cedf58e9d20bdbe2",
+        "android_client_info": {
+          "package_name": "com.techavtranew.planes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAILlMY5WqOSNvG05nLqvzfg21gKg6Iehk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

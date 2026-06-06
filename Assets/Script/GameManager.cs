@@ -95,6 +95,15 @@ public class GameManager : MonoBehaviour
             Instance = this;
         }
 
+        // Lock the framerate so mid-tier Android phones get a steady 60 FPS
+        // instead of whatever Unity defaults to (refresh rate, which lets
+        // the game spike to 90/120 Hz on newer phones, then thermal-throttle
+        // and stutter). vSyncCount > 0 would force vsync at the OS refresh
+        // rate and ignore targetFrameRate; setting it to 0 makes the
+        // framerate cap actually take effect.
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+
         // Auto-create SolanaManager if it doesn't exist
         EnsureSolanaManagerExists();
         EnsureLeaderboardSingletons();
@@ -146,6 +155,11 @@ public class GameManager : MonoBehaviour
         {
             var go = new GameObject("AbilitySpawner");
             go.AddComponent<AbilitySpawner>();
+        }
+        if (PushManager.Instance == null)
+        {
+            var go = new GameObject("PushManager");
+            go.AddComponent<PushManager>();
         }
     }
 
@@ -419,8 +433,16 @@ public class GameManager : MonoBehaviour
 
     public void CurrentCase()
     {
-        Debug.Log("Current Case Value");
-        _plane.transform.position = new Vector3(-20.0f * _planeID, _plane.transform.position.y, _plane.transform.position.z);
+        // _plane is the VariousPlane child of PlayerObj (same fileID in the
+        // scene). Writing world-space position here corrupts the carousel
+        // whenever PlayerObj has drifted mid-game and something triggers a
+        // refresh — e.g. Supabase server sync after a leaderboard submission
+        // or coin purchase calling RefreshFromPlayerPrefs. The plane then
+        // ends up with a broken local offset and disappears on the home
+        // screen until the app is restarted. Use localPosition so the
+        // carousel stays parent-relative regardless of where the player is.
+        Vector3 lp = _plane.transform.localPosition;
+        _plane.transform.localPosition = new Vector3(-20.0f * _planeID, lp.y, lp.z);
     }
 
     public void settingButton()
