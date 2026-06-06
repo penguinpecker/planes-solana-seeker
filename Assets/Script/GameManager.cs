@@ -161,6 +161,16 @@ public class GameManager : MonoBehaviour
             var go = new GameObject("PushManager");
             go.AddComponent<PushManager>();
         }
+        if (PromoPopupBuilder.Instance == null)
+        {
+            var go = new GameObject("PromoPopup");
+            go.AddComponent<PromoPopupBuilder>();
+        }
+        if (PromoManager.Instance == null)
+        {
+            var go = new GameObject("PromoManager");
+            go.AddComponent<PromoManager>();
+        }
     }
 
     // Previously exposed a music-only toggle; removed because the existing

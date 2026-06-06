@@ -158,33 +158,27 @@ public class Player : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
+    // Forward motion + steering now run on the RENDER clock (Update) instead of
+    // FixedUpdate (50Hz physics tick), which juddered against 60fps rendering
+    // with no Rigidbody interpolation. Time.deltaTime keeps speed and turn rate
+    // framerate-independent, so motion is smooth and a frame hitch no longer
+    // makes the plane lurch or the turn "stick".
     void Update()
     {
-
-       // LevelSpeed();
-
-       // StickMovement();
+        transform.Translate(Vector3.up * speed * Time.deltaTime, Space.Self);
+        if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            transform.RotateAround(left.transform.position, Vector3.forward, RotationSpeed * Time.deltaTime);
+        }
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            transform.RotateAround(right.transform.position, Vector3.back, RotationSpeed * Time.deltaTime);
+        }
     }
 
     public void ResetPos()
     {
-        
-    }
 
-    public void FixedUpdate()
-    {
-        //  _rb.velocity = transform.up * speed;
-
-        transform.Translate(Vector3.up * speed * Time.deltaTime, Space.Self);
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            transform.RotateAround(left.transform.position, Vector3.forward, RotationSpeed );
-        }
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            transform.RotateAround(right.transform.position, Vector3.back, RotationSpeed );
-        }
     }
 
     public void OnDisable()
@@ -208,14 +202,14 @@ public class Player : MonoBehaviour
             Debug.Log("normal level");
             levelString.text = "Normal";
             speed = 6;
-            RotationSpeed = 7;
+            RotationSpeed = 420; // deg/sec (×Time.deltaTime); ~7°/frame at 60fps — preserves old feel
         }
         if(LevelIndex == 1)
         {
             Debug.Log("High Level");
             levelString.text = "High";
             speed = 8;
-            RotationSpeed = 7;
+            RotationSpeed = 420; // deg/sec (×Time.deltaTime); ~7°/frame at 60fps — preserves old feel
         }
     }
 
@@ -263,13 +257,17 @@ public class Player : MonoBehaviour
     #endregion
 
     #region Public_MEthod
+    // Called every render frame from ScreenTouch while a finger holds the left/
+    // right half of the screen. Time.deltaTime makes the turn rate constant
+    // regardless of framerate (was raw per-frame, so turning sped up/slowed and
+    // felt "stuck" during frame dips).
     public void Arrowleft()
     {
-        transform.RotateAround(left.transform.position, Vector3.forward, RotationSpeed);
+        transform.RotateAround(left.transform.position, Vector3.forward, RotationSpeed * Time.deltaTime);
     }
     public void Arrowright()
     {
-        transform.RotateAround(right.transform.position, Vector3.back, RotationSpeed);
+        transform.RotateAround(right.transform.position, Vector3.back, RotationSpeed * Time.deltaTime);
     }
 
     public void LevelValue()

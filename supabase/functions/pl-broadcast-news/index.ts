@@ -153,6 +153,7 @@ Deno.serve(async (req) => {
     url?: string;
     topic?: string;
     type?: string;
+    image?: string;
   };
   try {
     payload = await req.json();
@@ -163,6 +164,7 @@ Deno.serve(async (req) => {
   const title = typeof payload.title === "string" ? payload.title.trim() : "";
   const body = typeof payload.body === "string" ? payload.body.trim() : "";
   const url = typeof payload.url === "string" ? payload.url.trim() : "";
+  const image = typeof payload.image === "string" ? payload.image.trim() : "";
   const topic = (typeof payload.topic === "string" && payload.topic.trim()) || "news";
   // The client routes a no-URL ping on data.type == "competition" (singular).
   // Map the plural "competitions" topic to that so a bare { topic:"competitions" }
@@ -181,12 +183,17 @@ Deno.serve(async (req) => {
   const data: Record<string, string> = { type };
   if (url) data.url = url;
 
+  // image (optional): full-colour logo/banner shown in the expanded notification
+  // (BigPicture). The small status-bar icon stays the monochrome silhouette —
+  // Android requires that; only the big image can carry the colour brand.
+  const notif: Record<string, string> = { title, body };
+  if (image) notif.image = image;
   const message = {
     message: {
       topic,
-      notification: { title, body },
+      notification: notif,
       data,
-      android: { priority: "high" },
+      android: { priority: "high", ...(image ? { notification: { image } } : {}) },
     },
   };
 
